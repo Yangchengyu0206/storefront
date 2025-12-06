@@ -1,5 +1,6 @@
 import { compact } from "lodash-es";
 import { adyenGatewayId } from "./AdyenDropIn/types";
+import { dummyGatewayId } from "./DummyDropIn/types";
 import { stripeV2GatewayId } from "./StripeV2DropIn/types";
 import {
 	type CheckoutAuthorizeStatusEnum,
@@ -9,10 +10,18 @@ import {
 	type PaymentGateway,
 } from "@/checkout/graphql";
 import { type MightNotExist } from "@/checkout/lib/globalTypes";
-import { getUrl, type ParamBasicValue } from "@/checkout/lib/utils/url";
+import { getUrl } from "@/checkout/lib/utils/url";
 import { type PaymentStatus } from "@/checkout/sections/PaymentSection/types";
 
-export const supportedPaymentGateways = [adyenGatewayId, stripeV2GatewayId] as const;
+// 支援新舊版本的 Dummy Payment Gateway
+const legacyDummyGatewayId = "mirumee.payments.dummy" as const;
+
+export const supportedPaymentGateways = [
+	adyenGatewayId,
+	stripeV2GatewayId,
+	dummyGatewayId,
+	legacyDummyGatewayId,
+] as const;
 
 export const getFilteredPaymentGateways = (
 	paymentGateways: MightNotExist<PaymentGateway[]>,
@@ -25,13 +34,7 @@ export const getFilteredPaymentGateways = (
 	return compact(paymentGateways).filter(({ id }) => supportedPaymentGateways.includes(id));
 };
 
-export const getUrlForTransactionInitialize = (extraQuery?: Record<string, ParamBasicValue>) =>
-	getUrl({
-		query: {
-			processingPayment: true,
-			...extraQuery,
-		},
-	});
+export const getUrlForTransactionInitialize = () => getUrl({ query: { processingPayment: true } });
 
 export const usePaymentStatus = ({
 	chargeStatus,
