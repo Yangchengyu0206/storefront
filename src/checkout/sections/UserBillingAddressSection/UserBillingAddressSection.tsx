@@ -69,7 +69,7 @@ export const UserBillingAddressSection: React.FC<UserBillingAddressSectionProps>
 					</FormProvider>
 				</div>
 			)}
-			{!billingSameAsShipping && (
+			{(!isShippingRequired || !billingSameAsShipping) && (
 				<div className="pb-2">
 					<UserAddressSectionContainer>
 						{({

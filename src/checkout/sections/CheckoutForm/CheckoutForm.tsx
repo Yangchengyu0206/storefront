@@ -40,6 +40,16 @@ export const CheckoutForm = () => {
 							</CollapseSection>
 						</Suspense>
 					)}
+					{!checkout?.isShippingRequired && (
+						<Suspense fallback={<AddressSectionSkeleton />}>
+							<CollapseSection collapse={showOnlyContact}>
+								<Divider />
+								<div className="py-4" data-testid="billingAddressSection">
+									{user ? <UserBillingAddressSection /> : <GuestBillingAddressSection />}
+								</div>
+							</CollapseSection>
+						</Suspense>
+					)}
 					<Suspense fallback={<DeliveryMethodsSkeleton />}>
 						<DeliveryMethods collapsed={showOnlyContact} />
 					</Suspense>

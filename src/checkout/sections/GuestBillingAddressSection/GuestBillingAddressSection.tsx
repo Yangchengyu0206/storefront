@@ -36,7 +36,7 @@ export const GuestBillingAddressSection = () => {
 					</FormProvider>
 				</div>
 			)}
-			{!billingSameAsShipping && (
+			{(!isShippingRequired || !billingSameAsShipping) && (
 				<div className="mb-4">
 					<FormProvider form={form}>
 						<AddressForm

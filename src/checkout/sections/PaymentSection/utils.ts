@@ -14,7 +14,7 @@ import { getUrl } from "@/checkout/lib/utils/url";
 import { type PaymentStatus } from "@/checkout/sections/PaymentSection/types";
 
 // 支援新舊版本的 Dummy Payment Gateway
-const legacyDummyGatewayId = "mirumee.payments.dummy" as const;
+export const legacyDummyGatewayId = "mirumee.payments.dummy" as const;
 
 export const supportedPaymentGateways = [
 	adyenGatewayId,
