@@ -190,6 +190,45 @@ export const DummyComponent = () => {
 				return;
 			}
 
+			// Check for redirect action (ECPay etc.)
+			// The backend returns: { "result": "CHARGE_ACTION_REQUIRED", "data": { "action": "REDIRECT", "url": "..." } }
+			let responseData = transactionData.data as any;
+
+			// Debug logging
+			if (process.env.NODE_ENV === "development") {
+				console.log("🔍 Transaction Data Raw:", transactionData);
+				console.log("🔍 Transaction Data .data field:", responseData);
+			}
+
+			if (typeof responseData === "string") {
+				try {
+					responseData = JSON.parse(responseData);
+				} catch (e) {
+					console.warn("Could not parse transaction data", e);
+				}
+			}
+
+			// Debug logging after parse
+			if (process.env.NODE_ENV === "development") {
+				console.log("🔍 Parsed Response Data:", responseData);
+			}
+
+			// Check structure 1: { "result": "CHARGE_ACTION_REQUIRED", "data": { "action": "REDIRECT", "url": "..." } }
+			if (responseData?.result === "CHARGE_ACTION_REQUIRED" && responseData?.data?.url) {
+				const redirectUrl = responseData.data.url;
+				console.log("🔄 Redirecting to payment gateway (Strategy 1):", redirectUrl);
+				window.location.href = redirectUrl;
+				return;
+			}
+
+			// Check structure 2: Flattened { "action": "REDIRECT", "url": "..." }
+			if (responseData?.action === "REDIRECT" && responseData?.url) {
+				const redirectUrl = responseData.url;
+				console.log("🔄 Redirecting to payment gateway (Strategy 2):", redirectUrl);
+				window.location.href = redirectUrl;
+				return;
+			}
+
 			if (transactionData.errors?.length) {
 				// 顯示詳細的錯誤資訊
 				const errorMessages = transactionData.errors.map((e) => ({
