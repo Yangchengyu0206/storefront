@@ -18,29 +18,58 @@ export const DummyComponent = () => {
 	const {onCheckoutComplete, completingCheckout} = useCheckoutComplete()
 	const isInProgress = completingCheckout || transactionInitializeState.fetching;
 
-	const onInitalizeClick = () => {
-		void transactionInitialize({
-			checkoutId: checkout.id,
-			paymentGateway: {
-				id: dummyGatewayId,
-				data: {
-					"event": {
-						"includePspReference": true,
-						"type": "CHARGE_SUCCESS"
-					}
+	const onInitalizeClick = async () => {
+		try {
+			const response = await transactionInitialize({
+				checkoutId: checkout.id,
+				paymentGateway: {
+					id: dummyGatewayId,
+					data: {
+						"event": {
+							"includePspReference": true,
+							"type": "CHARGE_SUCCESS"
+						}
+					},
 				},
-			},
-		}).catch((err) => {
-			console.error("There was a problem with Dummy Payment Gateway:", err);
-		}).then((_) => {
-			return onCheckoutComplete()
-		}).then((res) => {
-			if(res?.apiErrors){
-				res.apiErrors.forEach((error) => {
+			});
+
+			if (response.error) {
+				console.error("There was a problem with Dummy Payment Gateway:", response.error);
+				showCustomErrors([{ message: response.error.message || "Payment failed" }]);
+				return;
+			}
+
+			// Check for backend redirection instruction
+			// The backend might return CHARGE_ACTION_REQUIRED or AUTHORIZATION_ACTION_REQUIRED
+			// and provide a URL in the `data` field to redirect the user.
+			const transactionEvent = response.data?.transactionInitialize?.transactionEvent;
+			const data = response.data?.transactionInitialize?.data as Record<string, any> | undefined;
+
+			if (transactionEvent?.type === "CHARGE_ACTION_REQUIRED" || transactionEvent?.type === "AUTHORIZATION_ACTION_REQUIRED") {
+				// Assuming the redirect URL is provided in a field named 'redirectUrl' or 'paymentUrl' in the data JSON.
+				// Adjust this field name according to your specific backend implementation.
+				const redirectUrl = data?.redirectUrl || data?.paymentUrl;
+
+				if (redirectUrl) {
+					window.location.href = redirectUrl;
+					return;
+				} else {
+					// Logic for other types of actions if needed
+					console.warn("Action required but no redirect URL found in data:", data);
+				}
+			}
+
+			const completionResponse = await onCheckoutComplete();
+			if(completionResponse?.apiErrors){
+				completionResponse.apiErrors.forEach((error) => {
 					showCustomErrors([{ message: error.message }]);
 				});
 			}
-		})
+
+		} catch (err) {
+			console.error("There was a problem with Dummy Payment Gateway:", err);
+			showCustomErrors([{ message: "An unexpected error occurred" }]);
+		}
 	}
 
 	if(isInProgress){
