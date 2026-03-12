@@ -2,6 +2,7 @@ import { compact } from "lodash-es";
 import { adyenGatewayId } from "./AdyenDropIn/types";
 import { dummyGatewayId } from "./DummyDropIn/types";
 import { stripeV2GatewayId } from "./StripeV2DropIn/types";
+import { ecpayGatewayId } from "./ECPayDropIn/types";
 import {
 	type CheckoutAuthorizeStatusEnum,
 	type CheckoutChargeStatusEnum,
@@ -21,6 +22,7 @@ export const supportedPaymentGateways = [
 	stripeV2GatewayId,
 	dummyGatewayId,
 	legacyDummyGatewayId,
+	ecpayGatewayId,
 ] as const;
 
 export const getFilteredPaymentGateways = (

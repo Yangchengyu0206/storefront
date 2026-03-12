@@ -35,6 +35,7 @@ export const usePaymentGatewaysInitialize = () => {
 					"app.saleor.stripe",
 					"saleor.io.dummy-payment-app",
 					"mirumee.payments.dummy",
+					"app.saleor.ecpay",
 				],
 			});
 		}
@@ -67,7 +68,7 @@ export const usePaymentGatewaysInitialize = () => {
 						console.warn("1. Saleor 後端沒有配置任何 payment gateway");
 						console.warn("2. 後端配置的 gateway ID 不在支援列表中");
 						console.warn(
-							"   支援的 IDs: app.saleor.adyen, app.saleor.stripe, saleor.io.dummy-payment-app, mirumee.payments.dummy",
+							"   支援的 IDs: app.saleor.adyen, app.saleor.stripe, saleor.io.dummy-payment-app, mirumee.payments.dummy, app.saleor.ecpay",
 						);
 						console.warn("3. Payment gateway 初始化失敗");
 						console.warn("請檢查 Saleor 後端的 Payment Apps 設定");
