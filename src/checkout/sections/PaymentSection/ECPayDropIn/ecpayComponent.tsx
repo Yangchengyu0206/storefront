@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { getUrlForTransactionInitialize } from "../utils";
 import { ecpayGatewayId } from "./types";
-import { useECPayReturn } from "./useECPayReturn";
 import { Button } from "@/checkout/components";
 import { useTransactionInitializeMutation } from "@/checkout/graphql";
 import { useAlerts } from "@/checkout/hooks/useAlerts";
@@ -40,9 +39,6 @@ export const ECPayComponent = ({ config }: ECPayComponentProps = {}) => {
 	const [transactionInitializeState, transactionInitialize] = useTransactionInitializeMutation();
 	const { onCheckoutComplete, completingCheckout } = useCheckoutComplete();
 	const [isProcessing, setIsProcessing] = useState(false);
-
-	// 處理從綠界返回後的結帳完成流程
-	useECPayReturn();
 
 	const isInProgress = completingCheckout || transactionInitializeState.fetching || isProcessing;
 
