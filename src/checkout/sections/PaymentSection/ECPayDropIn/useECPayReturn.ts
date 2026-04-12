@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useCheckoutComplete } from "@/checkout/hooks/useCheckoutComplete";
 import { useTransactionProcessMutation } from "@/checkout/graphql";
-import { getQueryParams } from "@/checkout/lib/utils/url";
+import { clearQueryParams, getQueryParams } from "@/checkout/lib/utils/url";
 
 /**
  * 處理從綠界返回後的結帳完成流程
@@ -46,20 +46,40 @@ export const useECPayReturn = () => {
 		isProcessingRef.current = true;
 
 		const processAndComplete = async () => {
+			const finishWithFailure = (reason: string, details?: unknown) => {
+				console.error(reason, details);
+				sessionStorage.removeItem("ecpayTransactionId");
+				clearQueryParams("processingPayment", "transaction");
+				isProcessingRef.current = false;
+			};
+
 			try {
-				// 先同步 Saleor 的交易狀態
-				const processResult = await transactionProcess({ id: resolvedTransactionId });
+				// 先同步 Saleor 的交易狀態（加上短重試，降低回跳時序造成的偶發失敗）
+				let processResult: Awaited<ReturnType<typeof transactionProcess>> | undefined;
+				for (let attempt = 1; attempt <= 3; attempt++) {
+					processResult = await transactionProcess({ id: resolvedTransactionId });
+					const processErrors = processResult.data?.transactionProcess?.errors;
+					if (!processResult.error && !processErrors?.length) {
+						break;
+					}
+					if (attempt < 3) {
+						await new Promise((resolve) => setTimeout(resolve, 1000));
+					}
+				}
+
+				if (!processResult) {
+					finishWithFailure("Transaction process did not return any result");
+					return;
+				}
 
 				if (processResult.error) {
-					console.error("Transaction process failed:", processResult.error);
-					isProcessingRef.current = false;
+					finishWithFailure("Transaction process failed:", processResult.error);
 					return;
 				}
 
 				const processErrors = processResult.data?.transactionProcess?.errors;
 				if (processErrors?.length) {
-					console.error("Transaction process errors:", processErrors);
-					isProcessingRef.current = false;
+					finishWithFailure("Transaction process errors:", processErrors);
 					return;
 				}
 
@@ -69,8 +89,7 @@ export const useECPayReturn = () => {
 				// 完成結帳
 				await onCheckoutComplete();
 			} catch (error) {
-				console.error("Error during checkout completion:", error);
-				isProcessingRef.current = false;
+				finishWithFailure("Error during checkout completion:", error);
 			}
 		};
 

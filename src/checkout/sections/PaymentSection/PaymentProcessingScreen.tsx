@@ -1,8 +1,8 @@
 import { BarLoader } from "react-spinners";
-import React, { type ReactNode, useState, useCallback, useMemo } from "react";
+import React, { type ReactNode, useState, useCallback, useMemo, useEffect } from "react";
 import { Title } from "@/checkout/components";
 import { createSafeContext } from "@/checkout/providers/createSafeContext";
-import { getQueryParams } from "@/checkout/lib/utils/url";
+import { clearQueryParams, getQueryParams } from "@/checkout/lib/utils/url";
 
 interface PaymentProcessingContextConsumerProps {
 	setIsProcessingPayment: (processing: boolean) => void;
@@ -22,6 +22,20 @@ export const PaymentProcessingScreen = ({ children }: { children: ReactNode }) =
 	const handleSetProcessing = useCallback((processing: boolean) => {
 		setIsProcessingPayment(processing);
 	}, []);
+
+	useEffect(() => {
+		if (!isProcessingPayment) {
+			return;
+		}
+
+		// Safety valve: avoid infinite loading overlay.
+		const timeoutId = window.setTimeout(() => {
+			setIsProcessingPayment(false);
+			clearQueryParams("processingPayment");
+		}, 30000);
+
+		return () => window.clearTimeout(timeoutId);
+	}, [isProcessingPayment]);
 
 	return (
 		<Provider value={useMemo(() => ({ setIsProcessingPayment: handleSetProcessing }), [handleSetProcessing])}>
