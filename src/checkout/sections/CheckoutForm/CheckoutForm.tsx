@@ -1,5 +1,6 @@
 import { Suspense, useState } from "react";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
+import { EcpayLogisticsCheckoutSync } from "@/checkout/sections/EcpayLogistics/EcpayLogisticsCheckoutSync";
 import { Contact } from "@/checkout/sections/Contact";
 import { DeliveryMethods } from "@/checkout/sections/DeliveryMethods";
 import { ContactSkeleton } from "@/checkout/sections/Contact/ContactSkeleton";
@@ -25,6 +26,9 @@ export const CheckoutForm = () => {
 	return (
 		<div className="flex flex-col items-end">
 			<div className="flex w-full flex-col rounded">
+				<Suspense fallback={null}>
+					<EcpayLogisticsCheckoutSync />
+				</Suspense>
 				<Suspense fallback={<ContactSkeleton />}>
 					<Contact setShowOnlyContact={setShowOnlyContact} />
 				</Suspense>
