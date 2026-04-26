@@ -94,17 +94,21 @@ export const AddressForm: FC<PropsWithChildren<AddressFormProps>> = ({
 					};
 
 					if (field === "countryArea" && isRequired) {
+						const hasChinese = (s: string) => /[\u4e00-\u9fa5]/.test(s);
+						const allChoices = countryAreaChoices ?? [];
+						const hasAnyChinese = allChoices.some(({ verbose }) => hasChinese(verbose ?? ""));
+						const filteredChoices = hasAnyChinese
+							? allChoices.filter(({ verbose }) => hasChinese(verbose ?? ""))
+							: allChoices;
 						return (
 							<Select
 								{...commonProps}
 								key={field}
 								placeholder={getFieldLabel("countryArea")}
-								options={
-									countryAreaChoices?.map(({ verbose, raw }) => ({
-										label: verbose as string,
-										value: raw as string,
-									})) || []
-								}
+								options={filteredChoices.map(({ verbose, raw }) => ({
+									label: verbose as string,
+									value: raw as string,
+								}))}
 							/>
 						);
 					}

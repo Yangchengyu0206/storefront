@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { gql } from "graphql-tag";
 import { useMutation } from "urql";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
-import { getQueryParams } from "@/checkout/lib/utils/url";
+import { getRawQueryParams } from "@/checkout/lib/utils/url";
 
 /**
  * 將綠界物流相關欄位寫入 Checkout metadata（訂單成立後會帶到 Order）。
@@ -28,11 +28,10 @@ const CHECKOUT_METADATA_UPDATE = gql`
 
 export function EcpayLogisticsCheckoutSync() {
 	const { checkout, refetch } = useCheckout();
-	const {
-		ecpay_cvs_store_id: storeId,
-		ecpay_cvs_store_name: storeNameParam,
-		ecpay_logistics_sub_type: subParam,
-	} = getQueryParams();
+	const rawParams = getRawQueryParams() as unknown as Record<string, string>;
+	const storeId = rawParams.ecpay_cvs_store_id || "";
+	const storeNameParam = rawParams.ecpay_cvs_store_name || "";
+	const subParam = rawParams.ecpay_logistics_sub_type || "";
 	const [, mutate] = useMutation(CHECKOUT_METADATA_UPDATE);
 	const didCvs = useRef(false);
 	const didHomeDefault = useRef(false);
@@ -60,6 +59,14 @@ export function EcpayLogisticsCheckoutSync() {
 				name = decodeURIComponent(storeName).slice(0, 80);
 			} catch {
 				/* keep raw */
+			}
+			try {
+				sessionStorage.setItem(
+					`ecpay_cvs_store_${checkout.id}`,
+					JSON.stringify({ storeId, storeName: name, subType: sub }),
+				);
+			} catch {
+				/* ignore */
 			}
 			void apply([
 				{ key: "ecpay_logistics_type", value: "CVS" },
