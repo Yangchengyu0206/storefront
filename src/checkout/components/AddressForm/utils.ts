@@ -26,7 +26,7 @@ export const getEmptyAddressFormData = (): AddressFormData => ({
 	countryArea: "",
 	postalCode: "",
 	phone: "",
-	countryCode: "US",
+	countryCode: "TW",
 });
 
 export const getEmptyAddress = (): AddressFragment => {
@@ -77,10 +77,7 @@ export const getAddressInputDataFromAddress = (
 
 export const getAddressFormDataFromAddress = (address: OptionalAddress): AddressFormData => {
 	if (!address) {
-		return {
-			...getEmptyAddressFormData(),
-			countryCode: "US",
-		};
+		return getEmptyAddressFormData();
 	}
 
 	const { country, ...rest } = address;
@@ -141,7 +138,7 @@ export const getAddressValidationRulesVariables = (
 	autoSave
 		? {
 				checkRequiredFields: false,
-		  }
+			}
 		: {};
 
 export const addressFieldsOrder: AddressField[] = [
