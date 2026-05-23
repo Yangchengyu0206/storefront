@@ -1,0 +1,95 @@
+{
+	"project": "saleor-storefront",
+	"description": "Consumer-facing Saleor storefront — Next.js 15 App Router",
+	"version": "2026-05-23",
+	"tech": {
+		"framework": "Next.js 15",
+		"runtime": "React 19",
+		"language": "TypeScript 5.3",
+		"styling": "Tailwind CSS 3",
+		"graphql_client": "urql 4",
+		"package_manager": "pnpm 9"
+	},
+	"features": [
+		{
+			"id": "product_listing",
+			"name": "Product & Category Listing",
+			"status": "stable",
+			"paths": [
+				"src/app/[channel]/(main)/products/",
+				"src/app/[channel]/(main)/categories/",
+				"src/app/[channel]/(main)/collections/"
+			]
+		},
+		{
+			"id": "product_detail",
+			"name": "Product Detail Page",
+			"status": "stable",
+			"paths": ["src/app/[channel]/(main)/products/[slug]/"]
+		},
+		{
+			"id": "search",
+			"name": "Product Search",
+			"status": "stable",
+			"paths": ["src/app/[channel]/(main)/search/"]
+		},
+		{
+			"id": "cart",
+			"name": "Shopping Cart",
+			"status": "stable",
+			"paths": ["src/app/[channel]/(main)/cart/"]
+		},
+		{
+			"id": "checkout",
+			"name": "Checkout Flow",
+			"status": "stable",
+			"paths": ["src/app/checkout/", "src/checkout/"]
+		},
+		{
+			"id": "auth",
+			"name": "Authentication (login/register)",
+			"status": "stable",
+			"paths": ["src/app/[channel]/(main)/login/"]
+		},
+		{
+			"id": "order_history",
+			"name": "Order History",
+			"status": "stable",
+			"paths": ["src/app/[channel]/(main)/orders/"]
+		},
+		{
+			"id": "cms_pages",
+			"name": "CMS Static Pages",
+			"status": "stable",
+			"paths": ["src/app/[channel]/(main)/pages/"]
+		},
+		{
+			"id": "erp_webhooks",
+			"name": "ERP Integration Webhooks",
+			"status": "stable",
+			"paths": ["src/app/api/erp/"]
+		},
+		{ "id": "payments_stripe", "name": "Stripe Payment", "status": "stable" },
+		{ "id": "payments_adyen", "name": "Adyen Payment", "status": "stable" }
+	],
+	"out_of_scope": [
+		"Admin dashboard (lives in full-stack-fastapi-new frontend)",
+		"ECPay payment/logistics (handled by api-core in main project)",
+		"Saleor API / backend logic (lives in saleor-platform)",
+		"Order fulfillment workflow"
+	],
+	"constraints": [
+		"src/generated/ is auto-generated — never edit, run pnpm generate",
+		"All GraphQL operations must be defined as .graphql files",
+		"Every route under [channel]/ must use the channel slug in Saleor queries",
+		"App Router only — no pages/ directory"
+	],
+	"environment_variables": {
+		"NEXT_PUBLIC_SALEOR_API_URL": "required — Saleor GraphQL endpoint",
+		"NEXT_PUBLIC_STOREFRONT_URL": "required — public URL of this storefront",
+		"SALEOR_APP_TOKEN": "required — server-side Saleor API auth",
+		"ERP_WEBHOOK_SECRET": "required — validates ERP webhook requests",
+		"STRIPE_SECRET_KEY": "optional — Stripe server-side key",
+		"NEXT_PUBLIC_STRIPE_PK": "optional — Stripe publishable key"
+	}
+}

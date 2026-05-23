@@ -1,0 +1,102 @@
+Saleor Storefront Integration — LLM Reference
+Saleor version: 3.22 | Client: urql 4 + @saleor/auth-sdk 1.0.3
+
+## GraphQL Endpoint
+NEXT_PUBLIC_SALEOR_API_URL (default: http://localhost:8000/graphql/)
+
+## urql Setup Pattern
+```typescript
+// All queries go through the configured urql client
+// Auth token injected automatically by @saleor/auth-sdk exchange
+// Client setup: src/lib/urql.ts (or similar)
+import { createClient, cacheExchange, fetchExchange } from "urql"
+import { authExchange } from "@saleor/auth-sdk/urql"
+```
+
+## Key Operations
+
+### Products
+```graphql
+query ProductList($channel: String!, $first: Int!, $after: String) {
+  products(channel: $channel, first: $first, after: $after) {
+    edges {
+      node { id name slug thumbnail { url alt }
+        pricing { priceRange { start { gross { amount currency } } } }
+      }
+    }
+    pageInfo { hasNextPage endCursor }
+  }
+}
+```
+
+### Product Detail
+```graphql
+query ProductDetail($slug: String!, $channel: String!) {
+  product(slug: $slug, channel: $channel) {
+    id name description
+    variants { id name sku
+      pricing { price { gross { amount currency } } }
+      quantityAvailable(countryCode: TW)
+    }
+    media { url alt }
+    category { name slug }
+  }
+}
+```
+
+### Checkout Create
+```graphql
+mutation CheckoutCreate($channel: String!, $lines: [CheckoutLineInput!]!) {
+  checkoutCreate(input: { channel: $channel, lines: $lines }) {
+    checkout { id token }
+    errors { field message code }
+  }
+}
+```
+
+### Auth
+```graphql
+mutation Login($email: String!, $password: String!) {
+  tokenCreate(email: $email, password: $password) {
+    token refreshToken csrfToken
+    user { id email }
+    errors { field message code }
+  }
+}
+```
+
+## @saleor/auth-sdk
+```typescript
+import { createSaleorAuthClient } from "@saleor/auth-sdk"
+
+const authClient = createSaleorAuthClient({
+  saleorApiUrl: process.env.NEXT_PUBLIC_SALEOR_API_URL!,
+  // token stored in cookies
+})
+
+// React hooks:
+import { useAuthState, usePasswordLogin } from "@saleor/auth-sdk/react"
+const { authenticated, user, authenticating } = useAuthState()
+```
+
+## Channel System
+- Every product/price/availability query REQUIRES `channel` parameter
+- Channel slug from URL: `params.channel` in App Router
+- Default: `default-channel`
+- Missing channel → products return empty, no error
+
+## Pagination
+Saleor uses cursor-based pagination:
+- `first: N, after: cursor` for forward pagination
+- Response: `{ edges: [{ node, cursor }], pageInfo: { hasNextPage, endCursor } }`
+
+## Global IDs
+- Format: Base64(TypeName:uuid) — e.g., "UHJvZHVjdDphYmMxMjM="
+- Use as-is in GraphQL variables; never parse/decode in application code
+- Display-friendly ID: use `product.slug` for URLs, `order.number` for order display
+
+## Common Gotchas
+- `quantityAvailable` requires `countryCode` — use TW for Taiwan
+- `description` is RichText JSON (EditorJS format) — use `editorjs-html` to render
+- `product.thumbnail` may be null — always check before rendering
+- Checkout token ≠ order ID — checkout becomes order after payment
