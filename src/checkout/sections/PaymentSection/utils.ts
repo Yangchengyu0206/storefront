@@ -36,7 +36,8 @@ export const getFilteredPaymentGateways = (
 	return compact(paymentGateways).filter(({ id }) => supportedPaymentGateways.includes(id));
 };
 
-export const getUrlForTransactionInitialize = () => getUrl({ query: { processingPayment: true } });
+export const getUrlForTransactionInitialize = (extraQuery?: Record<string, any>) =>
+	getUrl({ query: { processingPayment: true, ...extraQuery } });
 
 export const usePaymentStatus = ({
 	chargeStatus,
