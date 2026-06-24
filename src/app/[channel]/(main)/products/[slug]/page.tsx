@@ -124,7 +124,15 @@ export default async function Page(props: {
 		revalidatePath("/cart");
 	}
 
-	const isAvailable = variants?.some((variant) => variant.quantityAvailable) ?? false;
+	// 現貨/預購：stock_type 存在商品 metadata。預購＝一律可訂（不被 quantityAvailable 擋）。
+	const stockType = product.metadata?.find((m) => m.key === "stock_type")?.value;
+	const isPreorder = stockType === "preorder";
+	const leadTimeRaw = product.metadata?.find((m) => m.key === "lead_time_days")?.value;
+	const leadTimeDays = leadTimeRaw ? Number.parseInt(leadTimeRaw, 10) : null;
+
+	const inStock = variants?.some((variant) => variant.quantityAvailable) ?? false;
+	const isAvailable = isPreorder || inStock;
+	const canOrder = isPreorder || !!selectedVariant?.quantityAvailable;
 
 	const price = selectedVariant?.pricing?.price?.gross
 		? formatMoney(selectedVariant.pricing.price.gross.amount, selectedVariant.pricing.price.gross.currency)
@@ -203,11 +211,16 @@ export default async function Page(props: {
 								variants={variants}
 								product={product}
 								channel={params.channel}
+								isPreorder={isPreorder}
 							/>
 						)}
-						<AvailabilityMessage isAvailable={isAvailable} />
+						<AvailabilityMessage
+							isAvailable={isAvailable}
+							isPreorder={isPreorder}
+							leadTimeDays={leadTimeDays}
+						/>
 						<div className="mt-8">
-							<AddButton disabled={!selectedVariantID || !selectedVariant?.quantityAvailable} />
+							<AddButton disabled={!selectedVariantID || !canOrder} />
 						</div>
 						{description && (
 							<div className="mt-8 space-y-6 text-sm text-neutral-500">

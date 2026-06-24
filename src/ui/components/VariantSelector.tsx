@@ -9,13 +9,16 @@ export function VariantSelector({
 	product,
 	selectedVariant,
 	channel,
+	isPreorder = false,
 }: {
 	variants: readonly VariantDetailsFragment[];
 	product: ProductListItemFragment;
 	selectedVariant?: VariantDetailsFragment;
 	channel: string;
+	isPreorder?: boolean;
 }) {
-	if (!selectedVariant && variants.length === 1 && variants[0]?.quantityAvailable) {
+	// 預購商品即使 quantityAvailable=0 也要能選到唯一變體（否則加入購物車鈕會一直 disabled）
+	if (!selectedVariant && variants.length === 1 && (variants[0]?.quantityAvailable || isPreorder)) {
 		redirect("/" + channel + getHrefForVariant({ productSlug: product.slug, variantId: variants[0].id }));
 	}
 
@@ -25,7 +28,7 @@ export function VariantSelector({
 				<legend className="sr-only">Variants</legend>
 				<div className="flex flex-wrap gap-3">
 					{variants.map((variant) => {
-						const isDisabled = !variant.quantityAvailable;
+						const isDisabled = !variant.quantityAvailable && !isPreorder;
 						const isCurrentVariant = selectedVariant?.id === variant.id;
 						return (
 							<LinkWithChannel
