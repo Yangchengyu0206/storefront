@@ -12,12 +12,18 @@ import {
 	dedupExchange,
 	fetchExchange,
 } from "urql";
+import { secureCookieStorage } from "@/lib/secureTokenStorage";
 
 const saleorApiUrl = process.env.NEXT_PUBLIC_SALEOR_API_URL;
 invariant(saleorApiUrl, "Missing NEXT_PUBLIC_SALEOR_API_URL env variable");
 
 export const saleorAuthClient = createSaleorAuthClient({
 	saleorApiUrl,
+	// SECURITY (R5): override the SDK default of window.localStorage for the
+	// refresh token with a SameSite=Strict; Secure cookie. See
+	// src/lib/secureTokenStorage.ts for the residual-risk note. Access token
+	// stays in the SDK's default in-memory store (not persisted).
+	refreshTokenStorage: secureCookieStorage,
 });
 
 const makeUrqlClient = () => {

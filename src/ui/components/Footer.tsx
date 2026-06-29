@@ -4,6 +4,7 @@ import { LinkWithChannel } from "../atoms/LinkWithChannel";
 import { ChannelSelect } from "./ChannelSelect";
 import { ChannelsListDocument, MenuGetBySlugDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
+import { legalHref, legalPages } from "@/lib/legal";
 
 export async function Footer({ channel }: { channel: string }) {
 	const footerLinks = await executeGraphQL(MenuGetBySlugDocument, {
@@ -17,7 +18,7 @@ export async function Footer({ channel }: { channel: string }) {
 					// and use app token instead
 					Authorization: `Bearer ${process.env.SALEOR_APP_TOKEN}`,
 				},
-		  })
+			})
 		: null;
 	const currentYear = new Date().getFullYear();
 
@@ -80,6 +81,21 @@ export async function Footer({ channel }: { channel: string }) {
 						</label>
 					</div>
 				)}
+
+				<nav
+					aria-label="法律資訊"
+					className="flex flex-wrap gap-x-6 gap-y-2 border-t border-neutral-200 py-6"
+				>
+					{legalPages.map((page) => (
+						<LinkWithChannel
+							key={page.slug}
+							href={legalHref(page.slug)}
+							className="text-sm text-neutral-500 hover:text-neutral-900"
+						>
+							{page.title}
+						</LinkWithChannel>
+					))}
+				</nav>
 
 				<div className="flex flex-col justify-between border-t border-neutral-200 py-10 sm:flex-row">
 					<p className="text-sm text-neutral-500">Copyright &copy; {currentYear} Your Store, Inc.</p>

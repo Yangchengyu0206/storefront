@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useCheckoutComplete } from "@/checkout/hooks/useCheckoutComplete";
 import { useTransactionProcessMutation } from "@/checkout/graphql";
+import { useAlerts } from "@/checkout/hooks/useAlerts";
 import { clearQueryParams, getQueryParams } from "@/checkout/lib/utils/url";
 
 /**
@@ -13,6 +14,7 @@ import { clearQueryParams, getQueryParams } from "@/checkout/lib/utils/url";
  */
 export const useECPayReturn = () => {
 	const { completingCheckout, onCheckoutComplete } = useCheckoutComplete();
+	const { showCustomErrors } = useAlerts();
 	const [{ fetching: processingTransaction }, transactionProcess] = useTransactionProcessMutation();
 	const isProcessingRef = useRef(false);
 
@@ -48,6 +50,15 @@ export const useECPayReturn = () => {
 		const processAndComplete = async () => {
 			const finishWithFailure = (reason: string, details?: unknown) => {
 				console.error(reason, details);
+				// B4-13：付款回跳處理失敗時，過去只 console.error 後靜默清掉參數，客人不知道
+				// 錢扣了沒、訂單成立了沒。改為明確提示，並附交易編號供客服查詢。
+				showCustomErrors([
+					{
+						message:
+							"付款結果確認失敗。若您已完成付款請勿重複付款，稍候重新整理頁面，" +
+							`或聯絡客服並提供交易編號：${resolvedTransactionId}`,
+					},
+				]);
 				sessionStorage.removeItem("ecpayTransactionId");
 				clearQueryParams("processingPayment", "transaction");
 				isProcessingRef.current = false;
@@ -94,5 +105,5 @@ export const useECPayReturn = () => {
 		};
 
 		void processAndComplete();
-	}, [completingCheckout, onCheckoutComplete, processingTransaction, transactionProcess]);
+	}, [completingCheckout, onCheckoutComplete, processingTransaction, transactionProcess, showCustomErrors]);
 };
