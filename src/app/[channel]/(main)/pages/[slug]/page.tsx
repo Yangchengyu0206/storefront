@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import { type Metadata } from "next";
 import edjsHTML from "editorjs-html";
-import xss from "xss";
 import { PageGetBySlugDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 
 const parser = edjsHTML();
 
@@ -41,7 +41,7 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
 			{contentHtml && (
 				<div className="prose">
 					{contentHtml.map((content) => (
-						<div key={content} dangerouslySetInnerHTML={{ __html: xss(content) }} />
+						<div key={content} dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }} />
 					))}
 				</div>
 			)}

@@ -2,7 +2,6 @@ import edjsHTML from "editorjs-html";
 import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
 import { type ResolvingMetadata, type Metadata } from "next";
-import xss from "xss";
 import { invariant } from "ts-invariant";
 import { type WithContext, type Product } from "schema-dts";
 import { AddButton } from "./AddButton";
@@ -13,6 +12,7 @@ import { formatMoney, formatMoneyRange } from "@/lib/utils";
 import { CheckoutAddLineDocument, ProductDetailsDocument, ProductListDocument } from "@/gql/graphql";
 import * as Checkout from "@/lib/checkout";
 import { AvailabilityMessage } from "@/ui/components/AvailabilityMessage";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 
 export async function generateMetadata(
 	props: {
@@ -225,7 +225,7 @@ export default async function Page(props: {
 						{description && (
 							<div className="mt-8 space-y-6 text-sm text-neutral-500">
 								{description.map((content) => (
-									<div key={content} dangerouslySetInnerHTML={{ __html: xss(content) }} />
+									<div key={content} dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }} />
 								))}
 							</div>
 						)}
