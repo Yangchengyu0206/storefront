@@ -7,6 +7,7 @@ export const NavLinks = async ({ channel }: { channel: string }) => {
 	const navLinks = await executeGraphQL(MenuGetBySlugDocument, {
 		variables: { slug: "navbar", channel },
 		revalidate: 60 * 60 * 24,
+		withAuth: false, // 公開選單不帶 cookie 認證，讓 fetch 快取生效
 	});
 
 	return (

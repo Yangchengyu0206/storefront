@@ -10,6 +10,7 @@ export async function Footer({ channel }: { channel: string }) {
 	const footerLinks = await executeGraphQL(MenuGetBySlugDocument, {
 		variables: { slug: "footer", channel },
 		revalidate: 60 * 60 * 24,
+		withAuth: false, // 公開選單不帶 cookie 認證，讓 fetch 快取生效
 	});
 	const channels = process.env.SALEOR_APP_TOKEN
 		? await executeGraphQL(ChannelsListDocument, {

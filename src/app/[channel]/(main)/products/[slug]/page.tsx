@@ -29,6 +29,7 @@ export async function generateMetadata(
 			channel: params.channel,
 		},
 		revalidate: 60,
+		withAuth: false, // 公開商品頁不帶 cookie 認證，讓 fetch 快取生效
 	});
 
 	if (!product) {
@@ -84,6 +85,7 @@ export default async function Page(props: {
 			channel: params.channel,
 		},
 		revalidate: 60,
+		withAuth: false, // 公開商品頁不帶 cookie 認證，讓 fetch 快取生效
 	});
 
 	if (!product) {

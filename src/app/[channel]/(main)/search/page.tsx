@@ -41,6 +41,7 @@ export default async function Page(props: {
 			...paginationVariables,
 		},
 		revalidate: 60,
+		withAuth: false, // 公開搜尋不帶 cookie 認證，讓 fetch 快取生效
 	});
 
 	if (!products) {

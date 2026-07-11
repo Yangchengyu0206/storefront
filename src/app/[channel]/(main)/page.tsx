@@ -16,6 +16,7 @@ export default async function Page(props: { params: Promise<{ channel: string }>
 			channel: params.channel,
 		},
 		revalidate: 60,
+		withAuth: false, // 公開目錄查詢不帶 cookie 認證，讓 fetch 快取生效
 	});
 
 	if (!data.collection?.products) {

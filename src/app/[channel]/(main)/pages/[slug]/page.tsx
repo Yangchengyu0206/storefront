@@ -12,6 +12,7 @@ export const generateMetadata = async (props: { params: Promise<{ slug: string }
 	const { page } = await executeGraphQL(PageGetBySlugDocument, {
 		variables: { slug: params.slug },
 		revalidate: 60,
+		withAuth: false, // 公開內容頁不帶 cookie 認證，讓 fetch 快取生效
 	});
 
 	return {
@@ -25,6 +26,7 @@ export default async function Page(props: { params: Promise<{ slug: string }> })
 	const { page } = await executeGraphQL(PageGetBySlugDocument, {
 		variables: { slug: params.slug },
 		revalidate: 60,
+		withAuth: false, // 公開內容頁不帶 cookie 認證，讓 fetch 快取生效
 	});
 
 	if (!page) {

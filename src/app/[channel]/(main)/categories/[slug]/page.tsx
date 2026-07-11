@@ -12,6 +12,7 @@ export const generateMetadata = async (
 	const { category } = await executeGraphQL(ProductListByCategoryDocument, {
 		variables: { slug: params.slug, channel: params.channel },
 		revalidate: 60,
+		withAuth: false, // 公開目錄查詢不帶 cookie 認證，讓 fetch 快取生效
 	});
 
 	return {
@@ -25,6 +26,7 @@ export default async function Page(props: { params: Promise<{ slug: string; chan
 	const { category } = await executeGraphQL(ProductListByCategoryDocument, {
 		variables: { slug: params.slug, channel: params.channel },
 		revalidate: 60,
+		withAuth: false, // 公開目錄查詢不帶 cookie 認證，讓 fetch 快取生效
 	});
 
 	if (!category || !category.products) {
