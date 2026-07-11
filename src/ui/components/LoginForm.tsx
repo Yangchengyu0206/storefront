@@ -41,9 +41,17 @@ export function LoginForm({ channel }: { channel: string }) {
 				</div>
 
 				<div className="mb-6">
-					<label htmlFor="password" className="mb-1 block text-sm font-medium text-neutral-700">
-						密碼
-					</label>
+					<div className="mb-1 flex items-center justify-between">
+						<label htmlFor="password" className="block text-sm font-medium text-neutral-700">
+							密碼
+						</label>
+						<LinkWithChannel
+							href="/forgot-password"
+							className="text-sm text-neutral-500 underline hover:text-neutral-900"
+						>
+							忘記密碼?
+						</LinkWithChannel>
+					</div>
 					<input
 						required
 						id="password"
