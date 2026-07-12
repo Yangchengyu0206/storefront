@@ -7,11 +7,9 @@ import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 import { LoginForm } from "@/ui/components/LoginForm";
 import { PaymentStatus } from "@/ui/components/PaymentStatus";
 
-// B4-13：消費者自助訂單明細頁（原本是 TODO）。重用既有 CurrentUserOrderList 查詢與
-// OrderDetails fragment（免跑 codegen 即可編譯）。
-// 註：出貨/物流追蹤/退款進度等欄位需擴充 OrderDetailsFragment（status / fulfillments {
-//     status, trackingNumber } / shippingAddress）並重跑 `npm run codegen` 後再補上；
-//     代購預購週期長，補上物流追蹤是後續高價值增強。
+// B4-13：消費者自助訂單明細頁。重用 CurrentUserOrderList 查詢與 OrderDetails fragment。
+// 2026-07-12：fragment 已擴充 status / fulfillments（trackingNumber）/ shippingAddress，
+// 出貨與物流追蹤區塊上線（原為占位文字）。
 export default async function OrderDetailPage(props: { params: Promise<{ id: string; channel: string }> }) {
 	const params = await props.params;
 	const orderId = decodeURIComponent(params.id);
@@ -134,9 +132,72 @@ export default async function OrderDetailPage(props: { params: Promise<{ id: str
 				</dl>
 			</div>
 
-			<p className="mt-6 text-xs text-neutral-400">
-				出貨與物流追蹤進度即將上線；如需協助，請聯絡客服並提供訂單編號 #{order.number}。
-			</p>
+			<div className="mt-8 rounded border border-neutral-100 bg-white p-6">
+				<h2 className="text-sm font-semibold text-neutral-900">出貨與物流追蹤</h2>
+				<p className="mt-2 text-sm text-neutral-600">
+					出貨狀態：
+					<span className="font-medium text-neutral-900">
+						{ORDER_STATUS_LABEL[order.status] ?? order.status}
+					</span>
+				</p>
+				{order.shippingAddress && (
+					<p className="mt-1 text-sm text-neutral-600">
+						收件：{order.shippingAddress.lastName}
+						{order.shippingAddress.firstName}，{order.shippingAddress.postalCode} {order.shippingAddress.city}
+						{order.shippingAddress.streetAddress1}
+					</p>
+				)}
+				{order.fulfillments.length > 0 ? (
+					<ul className="mt-3 divide-y text-sm">
+						{order.fulfillments.map((f) => (
+							<li key={f.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2">
+								<span className="text-neutral-900">{FULFILLMENT_STATUS_LABEL[f.status] ?? f.status}</span>
+								{f.trackingNumber ? (
+									<span className="text-neutral-600">
+										物流編號 / 取貨編號：
+										<span className="select-all font-medium text-neutral-900">{f.trackingNumber}</span>
+									</span>
+								) : (
+									<span className="text-neutral-400">尚未取得物流編號</span>
+								)}
+								{f.created && (
+									<time dateTime={f.created } className="text-neutral-400">
+										{formatDate(new Date(f.created ))}
+									</time>
+								)}
+							</li>
+						))}
+					</ul>
+				) : (
+					<p className="mt-3 text-sm text-neutral-400">
+						尚未出貨。預購商品備貨中，到貨後會依訂單順序出貨並通知你。
+					</p>
+				)}
+			</div>
+
+			<p className="mt-6 text-xs text-neutral-400">如需協助，請聯絡客服並提供訂單編號 #{order.number}。</p>
 		</div>
 	);
 }
+
+// Saleor OrderStatus / FulfillmentStatus → 繁中顯示
+const ORDER_STATUS_LABEL: Record<string, string> = {
+	UNCONFIRMED: "待確認",
+	UNFULFILLED: "備貨中",
+	PARTIALLY_FULFILLED: "部分出貨",
+	FULFILLED: "已出貨",
+	PARTIALLY_RETURNED: "部分退貨",
+	RETURNED: "已退貨",
+	CANCELED: "已取消",
+	EXPIRED: "已逾期",
+};
+
+const FULFILLMENT_STATUS_LABEL: Record<string, string> = {
+	FULFILLED: "已出貨",
+	WAITING_FOR_APPROVAL: "待確認",
+	CANCELED: "已取消",
+	REFUNDED: "已退款",
+	RETURNED: "已退貨",
+	REPLACED: "已換貨",
+	REFUNDED_AND_RETURNED: "已退款退貨",
+};

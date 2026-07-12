@@ -38,4 +38,18 @@ fragment OrderDetails on Order {
 		quantity
 	}
 	paymentStatus
+	status
+	fulfillments {
+		id
+		status
+		trackingNumber
+		created
+	}
+	shippingAddress {
+		firstName
+		lastName
+		streetAddress1
+		city
+		postalCode
+	}
 }

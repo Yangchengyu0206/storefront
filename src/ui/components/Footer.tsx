@@ -22,6 +22,10 @@ export async function Footer({ channel }: { channel: string }) {
 			})
 		: null;
 	const currentYear = new Date().getFullYear();
+	// 網路銷售營業人新制:官網須揭露營業人名稱與統一編號(未設定 env 時不顯示)
+	const sellerName = process.env.NEXT_PUBLIC_SELLER_NAME;
+	const sellerTaxId = process.env.NEXT_PUBLIC_SELLER_TAX_ID;
+	const sellerContact = process.env.NEXT_PUBLIC_SELLER_CONTACT;
 
 	return (
 		<footer className="border-neutral-300 bg-neutral-50">
@@ -97,6 +101,14 @@ export async function Footer({ channel }: { channel: string }) {
 						</LinkWithChannel>
 					))}
 				</nav>
+
+				{(sellerName ?? sellerTaxId) && (
+					<div className="border-t border-neutral-200 py-4 text-sm text-neutral-500">
+						{sellerName && <span>營業人名稱:{sellerName}</span>}
+						{sellerTaxId && <span className="ml-4">統一編號:{sellerTaxId}</span>}
+						{sellerContact && <span className="ml-4">聯絡方式:{sellerContact}</span>}
+					</div>
+				)}
 
 				<div className="flex flex-col justify-between border-t border-neutral-200 py-10 sm:flex-row">
 					<p className="text-sm text-neutral-500">Copyright &copy; {currentYear} Your Store, Inc.</p>
