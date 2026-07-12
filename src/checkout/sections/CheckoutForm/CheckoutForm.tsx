@@ -14,6 +14,7 @@ import { GuestShippingAddressSection } from "@/checkout/sections/GuestShippingAd
 import { UserBillingAddressSection } from "@/checkout/sections/UserBillingAddressSection";
 import { PaymentSection, PaymentSectionSkeleton } from "@/checkout/sections/PaymentSection";
 import { GuestBillingAddressSection } from "@/checkout/sections/GuestBillingAddressSection";
+import { InvoiceSection } from "@/checkout/sections/Invoice";
 import { useUser } from "@/checkout/hooks/useUser";
 
 export const CheckoutForm = () => {
@@ -57,6 +58,9 @@ export const CheckoutForm = () => {
 					<Suspense fallback={<DeliveryMethodsSkeleton />}>
 						<DeliveryMethods collapsed={showOnlyContact} />
 					</Suspense>
+					<CollapseSection collapse={showOnlyContact}>
+						<InvoiceSection />
+					</CollapseSection>
 					<Suspense fallback={<PaymentSectionSkeleton />}>
 						<CollapseSection collapse={showOnlyContact}>
 							<PaymentSection />
