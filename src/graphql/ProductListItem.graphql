@@ -2,6 +2,13 @@ fragment ProductListItem on Product {
 	id
 	name
 	slug
+	variants {
+		quantityAvailable
+	}
+	metadata {
+		key
+		value
+	}
 	pricing {
 		priceRange {
 			start {

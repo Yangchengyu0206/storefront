@@ -1,5 +1,6 @@
 import { LinkWithChannel } from "../atoms/LinkWithChannel";
 import { ProductImageWrapper } from "@/ui/atoms/ProductImageWrapper";
+import { isProductSoldOut } from "@/lib/availability";
 
 import type { ProductListItemFragment } from "@/gql/graphql";
 import { formatMoneyRange } from "@/lib/utils";
@@ -9,21 +10,29 @@ export function ProductElement({
 	loading,
 	priority,
 }: { product: ProductListItemFragment } & { loading: "eager" | "lazy"; priority?: boolean }) {
+	const soldOut = isProductSoldOut(product);
 	return (
 		<li data-testid="ProductElement">
 			<LinkWithChannel href={`/products/${product.slug}`} key={product.id}>
-				<div>
-					{product?.thumbnail?.url && (
-						<ProductImageWrapper
-							loading={loading}
-							src={product.thumbnail.url}
-							alt={product.thumbnail.alt ?? ""}
-							width={512}
-							height={512}
-							sizes={"512px"}
-							priority={priority}
-						/>
-					)}
+				<div className={soldOut ? "opacity-60" : undefined}>
+					<div className="relative">
+						{product?.thumbnail?.url && (
+							<ProductImageWrapper
+								loading={loading}
+								src={product.thumbnail.url}
+								alt={product.thumbnail.alt ?? ""}
+								width={512}
+								height={512}
+								sizes={"512px"}
+								priority={priority}
+							/>
+						)}
+						{soldOut && (
+							<span className="absolute right-2 top-2 rounded bg-neutral-900/80 px-2 py-1 text-xs font-medium text-white">
+								已售完
+							</span>
+						)}
+					</div>
 					<div className="mt-2 flex justify-between">
 						<div>
 							<h3 className="mt-1 text-sm font-semibold text-neutral-900">{product.name}</h3>
