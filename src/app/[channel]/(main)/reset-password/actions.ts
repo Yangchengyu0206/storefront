@@ -42,6 +42,9 @@ export async function resetPasswordAction(
 	if (password.length < 8) {
 		return { error: "密碼至少需要 8 個字元。" };
 	}
+	if (!(/[A-Za-z]/.test(password) && /\d/.test(password))) {
+		return { error: "密碼須同時包含英文字母與數字。" };
+	}
 	if (password !== confirm) {
 		return { error: "兩次輸入的密碼不一致。" };
 	}
