@@ -109,5 +109,5 @@
 			}
 		}
 	],
-	"ignorePatterns": ["*.js", "*.jsx", "*.cjs", "src/checkout/src/graphql"]
+	"ignorePatterns": ["*.js", "*.jsx", "*.cjs", "src/checkout/src/graphql", "e2e", "playwright.config.ts"]
 }
