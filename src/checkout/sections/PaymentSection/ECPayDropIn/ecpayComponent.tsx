@@ -54,7 +54,9 @@ export const ECPayComponent = ({ config }: ECPayComponentProps = {}) => {
 			// 如果不存在，才用原本寫死的 ecpayGatewayId (作為備案)
 			const activeGatewayId = config?.id || ecpayGatewayId;
 
-			console.log("使用 Gateway ID:", activeGatewayId, "來源:", config?.id ? "config" : "預設");
+			if (process.env.NODE_ENV !== "production") {
+				console.log("使用 Gateway ID:", activeGatewayId, "來源:", config?.id ? "config" : "預設");
+			}
 
 			// 初始化交易
 			const response = await transactionInitialize({
@@ -123,7 +125,9 @@ export const ECPayComponent = ({ config }: ECPayComponentProps = {}) => {
 					actionData?.checkoutUrl;
 
 				if (redirectUrl) {
-					console.log("正在轉跳至:", redirectUrl);
+					if (process.env.NODE_ENV !== "production") {
+						console.log("正在轉跳至:", redirectUrl);
+					}
 
 					// 儲存 transaction ID 以便後續處理
 					if (transactionData?.transaction?.id) {

@@ -5,9 +5,11 @@ import { Pagination } from "@/ui/components/Pagination";
 import { ProductList } from "@/ui/components/ProductList";
 import { getPaginatedListVariables } from "@/lib/utils";
 
+const storeName = process.env.NEXT_PUBLIC_SELLER_NAME || "商店";
+
 export const metadata = {
-	title: "Search products · Saleor Storefront example",
-	description: "Search products in Saleor Storefront example",
+	title: `搜尋商品 · ${storeName}`,
+	description: `在${storeName}搜尋商品`,
 };
 
 export default async function Page(props: {

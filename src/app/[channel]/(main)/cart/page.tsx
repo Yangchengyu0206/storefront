@@ -5,8 +5,10 @@ import * as Checkout from "@/lib/checkout";
 import { formatMoney, getHrefForVariant } from "@/lib/utils";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 
+const storeName = process.env.NEXT_PUBLIC_SELLER_NAME || "商店";
+
 export const metadata = {
-	title: "Shopping Cart · Saleor Storefront example",
+	title: `購物車 · ${storeName}`,
 };
 
 export default async function Page(props: { params: Promise<{ channel: string }> }) {

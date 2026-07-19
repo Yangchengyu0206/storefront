@@ -2,10 +2,11 @@ import { ProductListByCollectionDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import { ProductList } from "@/ui/components/ProductList";
 
+const storeName = process.env.NEXT_PUBLIC_SELLER_NAME || "商店";
+
 export const metadata = {
-	title: "ACME Storefront, powered by Saleor & Next.js",
-	description:
-		"Storefront Next.js Example for building performant e-commerce experiences with Saleor - the composable, headless commerce platform for global brands.",
+	title: storeName,
+	description: `${storeName}｜線上購物`,
 };
 
 export default async function Page(props: { params: Promise<{ channel: string }> }) {

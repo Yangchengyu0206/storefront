@@ -15,8 +15,10 @@ export const generateMetadata = async (props: { params: Promise<{ slug: string }
 		withAuth: false, // 公開內容頁不帶 cookie 認證，讓 fetch 快取生效
 	});
 
+	const storeName = process.env.NEXT_PUBLIC_SELLER_NAME || "商店";
+
 	return {
-		title: `${page?.seoTitle || page?.title || "Page"} · Saleor Storefront example`,
+		title: `${page?.seoTitle || page?.title || "Page"} · ${storeName}`,
 		description: page?.seoDescription || page?.seoTitle || page?.title,
 	};
 };

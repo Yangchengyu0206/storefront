@@ -7,9 +7,11 @@ import { ProductList } from "@/ui/components/ProductList";
 import { getPaginatedListVariables } from "@/lib/utils";
 import { SortBy } from "@/ui/components/SortBy";
 
+const storeName = process.env.NEXT_PUBLIC_SELLER_NAME || "商店";
+
 export const metadata = {
-	title: "Products · Saleor Storefront example",
-	description: "All products in Saleor Storefront example",
+	title: `所有商品 · ${storeName}`,
+	description: `${storeName}的所有商品`,
 };
 
 const getSortVariables = (sortParam?: string | string[]) => {

@@ -10,13 +10,10 @@ export const PaymentMethods = () => {
 		changingBillingCountry,
 		updateState: { checkoutDeliveryMethodUpdate },
 	} = useCheckoutUpdateState();
-	console.log("後端回傳的所有 Gateway:", availablePaymentGateways);
-	console.log("前端定義的 Component Map:", paymentMethodToComponent);
 	const gatewaysWithDefinedComponent = useMemo(
 		() => availablePaymentGateways.filter((gateway) => gateway.id in paymentMethodToComponent),
 		[availablePaymentGateways],
 	);
-	console.log("過濾後的 Gateway:", gatewaysWithDefinedComponent);
 	// delivery methods change total price so we want to wait until the change is done
 	if (changingBillingCountry || fetching || checkoutDeliveryMethodUpdate === "loading") {
 		return <PaymentSectionSkeleton />;

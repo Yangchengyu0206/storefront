@@ -86,7 +86,7 @@ export const usePaymentGatewaysInitialize = () => {
 					setGatewayConfigs(parsedConfigs);
 				},
 				onError: ({ errors }) => {
-					console.log({ errors });
+					console.error("Payment gateways initialization error:", errors);
 				},
 			}),
 			[filteredGateways, checkoutId, paymentGatewaysInitialize],

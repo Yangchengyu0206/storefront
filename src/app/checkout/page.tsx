@@ -2,8 +2,10 @@ import Link from "next/link";
 import { invariant } from "ts-invariant";
 import { RootWrapper } from "./pageWrapper";
 
+const storeName = process.env.NEXT_PUBLIC_SELLER_NAME || "商店";
+
 export const metadata = {
-	title: "Checkout · Saleor Storefront example",
+	title: `結帳 · ${storeName}`,
 };
 
 export default async function CheckoutPage(props: {
@@ -21,7 +23,7 @@ export default async function CheckoutPage(props: {
 			<section className="mx-auto flex min-h-dvh max-w-7xl flex-col p-8">
 				<div className="flex items-center font-bold">
 					<Link aria-label="homepage" href="/">
-						ACME
+						{storeName}
 					</Link>
 				</div>
 				<h1 className="mt-8 text-3xl font-bold text-neutral-900">Checkout</h1>

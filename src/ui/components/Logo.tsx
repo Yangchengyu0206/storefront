@@ -3,7 +3,8 @@
 import { usePathname } from "next/navigation";
 import { LinkWithChannel } from "../atoms/LinkWithChannel";
 
-const companyName = "ACME";
+// 店名以 env 驅動（頁尾亦使用 NEXT_PUBLIC_SELLER_NAME）；未設定時退回中性字樣，避免露出 demo 品牌
+const companyName = process.env.NEXT_PUBLIC_SELLER_NAME || "商店";
 
 export const Logo = () => {
 	const pathname = usePathname();
