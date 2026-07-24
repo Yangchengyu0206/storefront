@@ -1,6 +1,6 @@
 import { LinkWithChannel } from "../atoms/LinkWithChannel";
 import { ProductImageWrapper } from "@/ui/atoms/ProductImageWrapper";
-import { isProductSoldOut } from "@/lib/availability";
+import { getPreorderInfo, isProductSoldOut } from "@/lib/availability";
 
 import type { ProductListItemFragment } from "@/gql/graphql";
 import { formatMoneyRange } from "@/lib/utils";
@@ -11,6 +11,7 @@ export function ProductElement({
 	priority,
 }: { product: ProductListItemFragment } & { loading: "eager" | "lazy"; priority?: boolean }) {
 	const soldOut = isProductSoldOut(product);
+	const { isPreorder, leadTimeDays } = getPreorderInfo(product);
 	return (
 		<li data-testid="ProductElement">
 			<LinkWithChannel href={`/products/${product.slug}`} key={product.id}>
@@ -30,6 +31,11 @@ export function ProductElement({
 						{soldOut && (
 							<span className="absolute right-2 top-2 rounded bg-neutral-900/80 px-2 py-1 text-xs font-medium text-white">
 								已售完
+							</span>
+						)}
+						{isPreorder && (
+							<span className="absolute left-2 top-2 rounded bg-teal-600/90 px-2 py-1 text-xs font-medium text-white">
+								{leadTimeDays ? `預購・約 ${leadTimeDays} 日出貨` : "預購"}
 							</span>
 						)}
 					</div>

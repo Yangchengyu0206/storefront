@@ -7,3 +7,17 @@ export const isProductSoldOut = (product: ProductListItemFragment): boolean => {
 	if (isPreorder) return false;
 	return !(product.variants?.some((v) => v.quantityAvailable) ?? false);
 };
+
+// 預購資訊（與詳情頁 products/[slug]/page.tsx + AvailabilityMessage 一致）：
+// stock_type=preorder 為預購；lead_time_days 為到貨天數（供列表卡片顯示 ETA 角標）。
+export const getPreorderInfo = (
+	product: ProductListItemFragment,
+): { isPreorder: boolean; leadTimeDays: number | null } => {
+	const isPreorder = product.metadata?.some((m) => m.key === "stock_type" && m.value === "preorder") ?? false;
+	if (!isPreorder) {
+		return { isPreorder: false, leadTimeDays: null };
+	}
+	const raw = product.metadata?.find((m) => m.key === "lead_time_days")?.value;
+	const n = raw ? Number.parseInt(raw, 10) : Number.NaN;
+	return { isPreorder: true, leadTimeDays: Number.isFinite(n) && n > 0 ? n : null };
+};
