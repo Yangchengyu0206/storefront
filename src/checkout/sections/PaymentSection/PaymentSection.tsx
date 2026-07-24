@@ -1,6 +1,7 @@
 import React from "react";
 import { PaymentMethods } from "./PaymentMethods";
 import { useECPayReturn } from "./ECPayDropIn/useECPayReturn";
+import { PreorderExclusionConsent } from "./PreorderExclusionConsent";
 import { Divider } from "@/checkout/components/Divider";
 import { Title } from "@/checkout/components/Title";
 import { useConsentStore } from "@/checkout/state/consentStore";
@@ -19,6 +20,11 @@ export const PaymentSection = () => {
 
 	const privacyConsent = useConsentStore((state) => state.privacyConsent);
 	const setPrivacyConsent = useConsentStore((state) => state.setPrivacyConsent);
+	const preorderRequired = useConsentStore((state) => state.preorderRequired);
+	const preorderConsent = useConsentStore((state) => state.preorderConsent);
+
+	// 下單閘門：隱私/條款同意為必要；若購物車含除外商品，另需除外同意。
+	const canPay = privacyConsent && (!preorderRequired || preorderConsent);
 
 	return (
 		<>
@@ -48,11 +54,16 @@ export const PaymentSection = () => {
 					</span>
 				</label>
 
-				{privacyConsent ? (
+				{/* 除外告知＋勾選存證：僅在購物車含客製化給付商品時顯示。 */}
+				<PreorderExclusionConsent />
+
+				{canPay ? (
 					<PaymentMethods />
 				) : (
 					<p className="text-sm text-neutral-500" data-testid="consentRequiredNotice">
-						請先勾選上方同意條款，即可選擇付款方式並完成下單。
+						{preorderRequired && !preorderConsent && privacyConsent
+							? "本次訂單包含不適用七日鑑賞期之客製化給付商品，請先勾選上方除外同意，即可完成下單。"
+							: "請先勾選上方同意條款，即可選擇付款方式並完成下單。"}
 					</p>
 				)}
 			</div>

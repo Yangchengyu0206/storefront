@@ -28,17 +28,26 @@ export const legalPages: readonly LegalPage[] = [
 ] as const;
 
 // 對外揭露用的營運者資訊 —— 上線前請填入正式內容（消保法、個資法均要求可供查詢）。
-// 下列以 [請填寫] 標示之欄位為上線前必填占位字串，正式營運前務必替換。
+//
+// 資料來源：`NEXT_PUBLIC_SELLER_*` 環境變數（與 Footer 營業人揭露同一組，避免兩邊漂移）。
+// 統編／稅籍核發後填入 `.env` 即自動套用到法務頁與 Footer，**無須改碼**。
+// 未設定時退回 [請填寫] 占位字串，讓頁面明顯呈現「尚未填寫」而非誤植空白。
+const seller = (value: string | undefined, placeholder: string): string =>
+	value && value.trim() ? value.trim() : placeholder;
+
 export const companyInfo = {
-	name: "[請填寫：公司／商號全名]",
-	taxId: "[請填寫：統一編號]",
-	address: "[請填寫：營業地址]",
-	operator: "[請填寫：營運者／代表人姓名]",
-	serviceEmail: "[請填寫：客服 Email]",
-	servicePhone: "[請填寫：客服電話]",
-	serviceHours: "週一至週五 10:00–18:00（國定假日除外）",
+	name: seller(process.env.NEXT_PUBLIC_SELLER_NAME, "[請填寫：公司／商號全名]"),
+	taxId: seller(process.env.NEXT_PUBLIC_SELLER_TAX_ID, "[請填寫：統一編號]"),
+	address: seller(process.env.NEXT_PUBLIC_SELLER_ADDRESS, "[請填寫：營業地址]"),
+	operator: seller(process.env.NEXT_PUBLIC_SELLER_OPERATOR, "[請填寫：營運者／代表人姓名]"),
+	serviceEmail: seller(process.env.NEXT_PUBLIC_SELLER_EMAIL, "[請填寫：客服 Email]"),
+	servicePhone: seller(process.env.NEXT_PUBLIC_SELLER_PHONE, "[請填寫：客服電話]"),
+	serviceHours: seller(
+		process.env.NEXT_PUBLIC_SELLER_SERVICE_HOURS,
+		"週一至週五 10:00–18:00（國定假日除外）",
+	),
 	// 退貨／契約解除權之管轄法院（消保法相關訴訟）
-	jurisdictionCourt: "臺灣臺北地方法院",
+	jurisdictionCourt: seller(process.env.NEXT_PUBLIC_SELLER_COURT, "臺灣臺北地方法院"),
 };
 
 export function legalHref(slug: LegalPage["slug"]): string {

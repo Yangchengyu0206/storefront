@@ -12,7 +12,9 @@ import { formatMoney, formatMoneyRange } from "@/lib/utils";
 import { CheckoutAddLineDocument, ProductDetailsDocument, ProductListDocument } from "@/gql/graphql";
 import * as Checkout from "@/lib/checkout";
 import { AvailabilityMessage } from "@/ui/components/AvailabilityMessage";
+import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 import { sanitizeHtml } from "@/lib/sanitizeHtml";
+import { isCoolingOffExcluded } from "@/lib/cooling-off";
 
 export async function generateMetadata(
 	props: {
@@ -129,6 +131,9 @@ export default async function Page(props: {
 	// 現貨/預購：stock_type 存在商品 metadata。預購＝一律可訂（不被 quantityAvailable 擋）。
 	const stockType = product.metadata?.find((m) => m.key === "stock_type")?.value;
 	const isPreorder = stockType === "preorder";
+	// 七日鑑賞期除外「事先載明」：店家於商品 metadata 標記 cooling_off_excluded=true 者，
+	// 依退換貨政策須於商品頁面事先載明不適用鑑賞期（見 lib/cooling-off）。
+	const coolingOffExcluded = isCoolingOffExcluded(product.metadata);
 	const leadTimeRaw = product.metadata?.find((m) => m.key === "lead_time_days")?.value;
 	const leadTimeDays = leadTimeRaw ? Number.parseInt(leadTimeRaw, 10) : null;
 
@@ -221,6 +226,20 @@ export default async function Page(props: {
 							isPreorder={isPreorder}
 							leadTimeDays={leadTimeDays}
 						/>
+						{coolingOffExcluded && (
+							<div
+								className="mt-4 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"
+								data-testid="coolingOffExcludedNotice"
+							>
+								本商品係依您指定向海外採購之<strong>客製化給付</strong>，依《消費者保護法》及「通訊交易
+								解除權合理例外情事適用準則」，<strong>不適用七日鑑賞期</strong>（非因商品瑕疵不得無條件
+								退貨）。詳見{" "}
+								<LinkWithChannel href="/legal/returns#exceptions" className="underline">
+									退換貨與退款政策
+								</LinkWithChannel>
+								。
+							</div>
+						)}
 						<div className="mt-8">
 							<AddButton disabled={!selectedVariantID || !canOrder} />
 						</div>
