@@ -1,0 +1,106 @@
+fragment AccountAddress on Address {
+	id
+	firstName
+	lastName
+	companyName
+	streetAddress1
+	streetAddress2
+	city
+	cityArea
+	postalCode
+	countryArea
+	country {
+		code
+		country
+	}
+	phone
+	isDefaultShippingAddress
+	isDefaultBillingAddress
+}
+
+fragment AccountUser on User {
+	id
+	email
+	firstName
+	lastName
+	addresses {
+		...AccountAddress
+	}
+	defaultShippingAddress {
+		...AccountAddress
+	}
+	defaultBillingAddress {
+		...AccountAddress
+	}
+}
+
+query AccountMe {
+	me {
+		...AccountUser
+	}
+}
+
+mutation AccountUpdate($input: AccountInput!) {
+	accountUpdate(input: $input) {
+		user {
+			...AccountUser
+		}
+		errors {
+			field
+			message
+			code
+		}
+	}
+}
+
+mutation AccountAddressCreate($input: AddressInput!, $type: AddressTypeEnum) {
+	accountAddressCreate(input: $input, type: $type) {
+		user {
+			...AccountUser
+		}
+		errors {
+			field
+			message
+			code
+		}
+	}
+}
+
+mutation AccountAddressUpdate($id: ID!, $input: AddressInput!) {
+	accountAddressUpdate(id: $id, input: $input) {
+		user {
+			...AccountUser
+		}
+		errors {
+			field
+			message
+			code
+		}
+	}
+}
+
+mutation AccountAddressDelete($id: ID!) {
+	accountAddressDelete(id: $id) {
+		user {
+			...AccountUser
+		}
+		errors {
+			field
+			message
+			code
+		}
+	}
+}
+
+mutation AccountSetDefaultAddress($id: ID!, $type: AddressTypeEnum!) {
+	accountSetDefaultAddress(id: $id, type: $type) {
+		user {
+			...AccountUser
+		}
+		errors {
+			field
+			message
+			code
+		}
+	}
+}
