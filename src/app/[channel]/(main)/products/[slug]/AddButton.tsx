@@ -9,6 +9,9 @@ export function AddButton({ disabled }: { disabled?: boolean }) {
 	return (
 		<button
 			type="submit"
+			// 用 testid 而不是讓 e2e 靠按鈕文字選取：文案一改（例如這次 "Add to cart"
+			// 改成「加入購物車」）三條測試就會同時斷掉，而那跟測試想驗的行為無關。
+			data-testid="AddToCartButton"
 			aria-disabled={isButtonDisabled}
 			aria-busy={pending}
 			onClick={(e) => isButtonDisabled && e.preventDefault()}
@@ -36,10 +39,10 @@ export function AddButton({ disabled }: { disabled?: boolean }) {
 							d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
 						></path>
 					</svg>
-					<span>Processing...</span>
+					<span>加入中…</span>
 				</div>
 			) : (
-				<span>Add to cart</span>
+				<span>加入購物車</span>
 			)}
 		</button>
 	);

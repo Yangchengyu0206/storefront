@@ -30,7 +30,7 @@ export const PaymentSection = () => {
 		<>
 			<Divider />
 			<div className="py-4" data-testid="paymentMethods">
-				<Title>Payment methods</Title>
+				<Title>付款方式</Title>
 
 				{/* R7: explicit consent gate — the order cannot proceed until checked. */}
 				<label className="mb-4 flex items-start gap-2 text-sm text-neutral-700" data-testid="consentCheckbox">

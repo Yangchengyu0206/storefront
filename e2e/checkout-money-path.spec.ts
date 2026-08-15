@@ -17,7 +17,7 @@ async function addFirstProductToCart(page: Page) {
 	await page.goto(`/${CHANNEL}/products`);
 	await page.getByTestId("ProductElement").first().locator("a").first().click();
 	await page.waitForURL(/\/products\/[^/]+/);
-	const addButton = page.getByRole("button", { name: "Add to cart" });
+	const addButton = page.getByTestId("AddToCartButton");
 	await expect(addButton).toBeEnabled();
 	await addButton.click();
 	// wait for the server action to finish — the nav cart badge turns to 1

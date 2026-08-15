@@ -10,18 +10,18 @@ test.describe("Storefront browse smoke", () => {
 		expect(await products.count()).toBeGreaterThan(0);
 	});
 
-	test("product page shows price and Add to cart", async ({ page }) => {
+	test("product page shows price and add-to-cart button", async ({ page }) => {
 		await page.goto(`/${CHANNEL}/products`);
 		await page.getByTestId("ProductElement").first().locator("a").first().click();
 		await page.waitForURL(/\/products\/[^/]+/);
-		await expect(page.getByRole("button", { name: "Add to cart" })).toBeVisible();
+		await expect(page.getByTestId("AddToCartButton")).toBeVisible();
 	});
 
 	test("add to cart puts the item in the cart", async ({ page }) => {
 		await page.goto(`/${CHANNEL}/products`);
 		await page.getByTestId("ProductElement").first().locator("a").first().click();
 		await page.waitForURL(/\/products\/[^/]+/);
-		const addButton = page.getByRole("button", { name: "Add to cart" });
+		const addButton = page.getByTestId("AddToCartButton");
 		await expect(addButton).toBeEnabled();
 		await addButton.click();
 		// wait for the server action to finish — the nav cart badge turns to 1
