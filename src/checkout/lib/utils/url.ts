@@ -14,6 +14,11 @@ const queryParamsMap = {
 	// payment flow
 	transaction: "transaction", // allows us to process started transaction
 	processingPayment: "processingPayment", // tell the processing screen to show up
+	// ECPay 付款失敗回跳（SF-15）：api-core 依綠界 RtnCode 分流，非成功時帶這三個參數，
+	// 讓結帳頁顯示可重試的錯誤而不是跑「付款成功」的完成流程。
+	paymentFailed: "paymentFailed",
+	code: "code",
+	msg: "msg",
 	// adyen
 	redirectResult: "redirectResult",
 	resultCode: "resultCode",

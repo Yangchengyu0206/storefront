@@ -19,7 +19,25 @@ export const useECPayReturn = () => {
 	const isProcessingRef = useRef(false);
 
 	useEffect(() => {
-		const { processingPayment, transaction } = getQueryParams();
+		const { processingPayment, transaction, paymentFailed, code, msg } = getQueryParams();
+
+		// 付款失敗（SF-15）：api-core 依綠界 RtnCode 分流，非成功時帶 paymentFailed=1 回來。
+		// 這條路徑**不可以**跑 transactionProcess / checkoutComplete——那是「付款成功」的流程。
+		// 舊碼不分流，刷卡被拒的客人會看到「若您已完成付款請勿重複付款，請聯絡客服」，
+		// 於是本來換張卡就能成交的單被丟掉，還多一通客服電話。
+		if (paymentFailed) {
+			showCustomErrors([
+				{
+					message:
+						"付款未完成，您的款項並未被扣除。請重新選擇付款方式或更換卡片再試一次。" +
+						(code ? `（綠界代碼 ${String(code)}${msg ? `：${String(msg)}` : ""}）` : ""),
+				},
+			]);
+			sessionStorage.removeItem("ecpayTransactionId");
+			// 只清失敗相關參數，留在結帳頁的付款區塊讓客人直接重試。
+			clearQueryParams("paymentFailed", "code", "msg");
+			return;
+		}
 
 		// 檢查是否是從綠界返回
 		// 可以通過 processingPayment 參數或 transaction 參數來判斷
