@@ -46,8 +46,13 @@ export async function generateMetadata(
 		title: `${product.name} | ${product.seoTitle || (await parent).title?.absolute}`,
 		description: product.seoDescription || productNameAndVariant,
 		alternates: {
+			// canonical 必須含 channel 區段：實際路由是 /[channel]/products/[slug]，
+			// 少了它產生的網址是 404（實跑 curl /products/test → 404，全站只有根路徑有轉址）。
+			// Google 讀到 canonical 指向 404 會判定這頁不是正規版本而不收錄或降權，
+			// 等於整站商品頁拿不到自然搜尋流量。
 			canonical: process.env.NEXT_PUBLIC_STOREFRONT_URL
-				? process.env.NEXT_PUBLIC_STOREFRONT_URL + `/products/${encodeURIComponent(params.slug)}`
+				? process.env.NEXT_PUBLIC_STOREFRONT_URL +
+					`/${encodeURIComponent(params.channel)}/products/${encodeURIComponent(params.slug)}`
 				: undefined,
 		},
 		openGraph: product.thumbnail

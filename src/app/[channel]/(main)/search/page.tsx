@@ -29,7 +29,8 @@ export default async function Page(props: {
 		if (!firstValidSearchValue) {
 			notFound();
 		}
-		redirect(`/search?${new URLSearchParams({ query: firstValidSearchValue }).toString()}`);
+		// 少了 channel 前綴會轉到 404（與 canonical 同一根因）。
+		redirect(`/${params.channel}/search?${new URLSearchParams({ query: firstValidSearchValue }).toString()}`);
 	}
 
 	const paginationVariables = getPaginatedListVariables({ params: searchParams });
