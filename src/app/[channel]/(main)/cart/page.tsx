@@ -2,8 +2,10 @@ import Image from "next/image";
 import { CheckoutLink } from "./CheckoutLink";
 import { DeleteLineButton } from "./DeleteLineButton";
 import * as Checkout from "@/lib/checkout";
+import { getShippingInfo } from "@/lib/shipping-info";
 import { formatMoney, getHrefForVariant } from "@/lib/utils";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
+import { ShippingNotice } from "@/ui/components/ShippingNotice";
 
 const storeName = process.env.NEXT_PUBLIC_SELLER_NAME || "商店";
 
@@ -16,6 +18,7 @@ export default async function Page(props: { params: Promise<{ channel: string }>
 	const checkoutId = await Checkout.getIdFromCookies(params.channel);
 
 	const checkout = await Checkout.find(checkoutId);
+	const shippingInfo = await getShippingInfo();
 
 	if (!checkout || checkout.lines.length < 1) {
 		return (
@@ -88,7 +91,7 @@ export default async function Page(props: { params: Promise<{ channel: string }>
 						<div className="flex items-center justify-between gap-2 py-2">
 							<div>
 								<p className="font-semibold text-neutral-900">總計</p>
-								<p className="mt-1 text-sm text-neutral-500">運費將於下一步計算</p>
+								<ShippingNotice info={shippingInfo} subtotal={checkout.totalPrice.gross.amount} />
 							</div>
 							<div className="font-medium text-neutral-900">
 								{formatMoney(checkout.totalPrice.gross.amount, checkout.totalPrice.gross.currency)}

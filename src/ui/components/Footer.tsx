@@ -19,6 +19,15 @@ export async function Footer({ channel }: { channel: string }) {
 				},
 			})
 		: null;
+	// 幣別切換器只在「真的有兩個以上可用幣別」時才出現（SF-16）。
+	//
+	// Saleor 裡還留著 demo 樣板的 Channel-PLN 與 Channel-USD，兩個都是停用狀態，
+	// 但這支查詢沒有濾 isActive——一旦設了 SALEOR_APP_TOKEN，頁尾就會冒出一個
+	// 讓客人選 PLN／USD 的下拉，點下去進到沒有商品、沒有金流設定的死頻道。
+	// 台灣代購只有一個 TWD 頻道，這個控制項對客人只有製造疑慮的作用。
+	const activeChannels = (channels?.channels ?? []).filter((c) => c.isActive);
+	const showChannelSwitcher = activeChannels.length > 1;
+
 	const currentYear = new Date().getFullYear();
 	// 網路銷售營業人新制:官網須揭露營業人名稱與統一編號(未設定 env 時不顯示)
 	const sellerName = process.env.NEXT_PUBLIC_SELLER_NAME;
@@ -77,10 +86,10 @@ export async function Footer({ channel }: { channel: string }) {
 					})}
 				</div>
 
-				{channels?.channels && (
+				{showChannelSwitcher && (
 					<div className="mb-4 text-neutral-500">
 						<label>
-							<span className="text-sm">切換幣別:</span> <ChannelSelect channels={channels.channels} />
+							<span className="text-sm">切換幣別：</span> <ChannelSelect channels={activeChannels} />
 						</label>
 					</div>
 				)}

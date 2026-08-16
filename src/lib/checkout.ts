@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { CheckoutCreateDocument, CheckoutFindDocument } from "@/gql/graphql";
+import { STOREFRONT_IS_HTTPS } from "@/lib/env";
 import { executeGraphQL } from "@/lib/graphql";
 
 export async function getIdFromCookies(channel: string) {
@@ -9,8 +10,7 @@ export async function getIdFromCookies(channel: string) {
 }
 
 export async function saveIdToCookie(channel: string, checkoutId: string) {
-	const shouldUseHttps =
-		process.env.NEXT_PUBLIC_STOREFRONT_URL?.startsWith("https") || !!process.env.NEXT_PUBLIC_VERCEL_URL;
+	const shouldUseHttps = STOREFRONT_IS_HTTPS;
 	const cookieName = `checkoutId-${channel}`;
 	(await cookies()).set(cookieName, checkoutId, {
 		sameSite: "lax",

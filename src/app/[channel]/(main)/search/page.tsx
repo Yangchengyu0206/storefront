@@ -39,8 +39,14 @@ export default async function Page(props: {
 		variables: {
 			search: searchValue,
 			channel: params.channel,
-			sortBy: ProductOrderField.Rating,
-			sortDirection: OrderDirection.Asc,
+			// 搜尋結果依相關度排序（SF-10）。
+			// 原本是 RATING + ASC——評分**由低到高**，也就是把最差的排在最前面；
+			// 而這個商品庫根本沒有評分資料，實際效果是「以一個全為 null 的欄位排序」＝
+			// 順序等同隨機。客人搜尋後看到的第一批商品跟他打的字沒有關係。
+			// RANK 是 Saleor 專為 search 提供的相關度分數（sorters.py: RANK = search_rank），
+			// 分數越高越相關，所以要 DESC。
+			sortBy: ProductOrderField.Rank,
+			sortDirection: OrderDirection.Desc,
 			...paginationVariables,
 		},
 		revalidate: 60,
@@ -55,12 +61,17 @@ export default async function Page(props: {
 		<section className="mx-auto max-w-7xl p-8 pb-16">
 			{products.totalCount && products.totalCount > 0 ? (
 				<div>
-					<h1 className="pb-8 text-xl font-semibold">Search results for &quot;{searchValue}&quot;:</h1>
+					<h1 className="pb-8 text-xl font-semibold">「{searchValue}」的搜尋結果</h1>
 					<ProductList products={products.edges.map((e) => e.node)} />
 					<Pagination pageInfo={products.pageInfo} />
 				</div>
 			) : (
-				<h1 className="mx-auto pb-8 text-center text-xl font-semibold">Nothing found :(</h1>
+				<div className="mx-auto max-w-lg py-16 text-center">
+					<h1 className="text-xl font-semibold">找不到「{searchValue}」的相關商品</h1>
+					<p className="mt-3 text-sm text-neutral-600">
+						可以試試看更簡短的關鍵字，或是換個說法（例如只打品牌或品項名稱）。
+					</p>
+				</div>
 			)}
 		</section>
 	);

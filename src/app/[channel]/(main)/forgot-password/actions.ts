@@ -1,5 +1,7 @@
 "use server";
 
+import { STOREFRONT_URL } from "@/lib/env";
+
 export type ForgotPasswordState = { error?: string; sent?: boolean } | undefined;
 
 const REQUEST_PASSWORD_RESET_MUTATION = /* GraphQL */ `
@@ -39,9 +41,9 @@ export async function forgotPasswordAction(
 		return { error: "系統設定有誤(缺少 Saleor API URL),請聯絡客服。" };
 	}
 
-	const storefrontUrl = process.env.NEXT_PUBLIC_STOREFRONT_URL ?? "";
 	// Saleor 會在此 URL 後面帶上 ?email=...&token=...
-	const redirectUrl = `${storefrontUrl}/${channel}/reset-password`;
+	// 同樣是寄給客人的信裡的連結，缺 base URL 會變成點不開的相對路徑。
+	const redirectUrl = `${STOREFRONT_URL}/${channel}/reset-password`;
 
 	let result: RequestPasswordResetResult;
 	try {

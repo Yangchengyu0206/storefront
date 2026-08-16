@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { getServerAuthClient } from "@/app/config";
+import { STOREFRONT_URL } from "@/lib/env";
 
 export type RegisterState = { error?: string; needsConfirmation?: boolean } | undefined;
 
@@ -56,8 +57,9 @@ export async function registerAction(
 		return { error: "系統設定有誤(缺少 Saleor API URL),請聯絡客服。" };
 	}
 
-	const storefrontUrl = process.env.NEXT_PUBLIC_STOREFRONT_URL ?? "";
-	const redirectUrl = `${storefrontUrl}/${channel}/login`;
+	// 這個網址會出現在寄給客人的驗證信裡。原本 `?? ""` 會產生相對路徑
+	// `/default-channel/login`，客人點了打不開，而且我們這邊完全不會知道。
+	const redirectUrl = `${STOREFRONT_URL}/${channel}/login`;
 
 	let result: AccountRegisterResult;
 	try {

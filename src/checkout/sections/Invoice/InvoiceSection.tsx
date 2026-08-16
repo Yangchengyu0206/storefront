@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { gql } from "graphql-tag";
 import { useMutation } from "urql";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { Title } from "@/checkout/components/Title";
 import { Divider } from "@/checkout/components";
+import { registerPendingMetadataFlush } from "@/checkout/lib/pendingMetadata";
 
 /**
  * 電子發票選項——寫入 Checkout metadata（訂單成立後帶到 Order，api-core 開發票時讀取）。
@@ -70,6 +71,18 @@ export function InvoiceSection() {
 		}
 	}, [storageKey]);
 
+	// 目前選項的 metadata 形式。debounce 與 flush 兩條路徑共用，避免兩邊各寫一份而漂移。
+	const buildInput = useCallback(
+		() => [
+			{ key: "invoice.type", value: type },
+			{ key: "invoice.carrier", value: type === "mobile" || type === "citizen" ? carrier.trim() : "" },
+			{ key: "invoice.tax_id", value: type === "company" ? taxId.trim() : "" },
+			{ key: "invoice.title", value: type === "company" ? title.trim() : "" },
+			{ key: "invoice.love_code", value: type === "donate" ? loveCode.trim() : "" },
+		],
+		[type, carrier, taxId, title, loveCode],
+	);
+
 	// 選項變更 → debounce 寫回 checkout metadata（＋ sessionStorage 備援）
 	const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 	useEffect(() => {
@@ -81,19 +94,24 @@ export function InvoiceSection() {
 				/* ignore */
 			}
 		}
+		const checkoutId = checkout.id;
 		clearTimeout(timer.current);
 		timer.current = setTimeout(() => {
-			const input = [
-				{ key: "invoice.type", value: type },
-				{ key: "invoice.carrier", value: type === "mobile" || type === "citizen" ? carrier.trim() : "" },
-				{ key: "invoice.tax_id", value: type === "company" ? taxId.trim() : "" },
-				{ key: "invoice.title", value: type === "company" ? title.trim() : "" },
-				{ key: "invoice.love_code", value: type === "donate" ? loveCode.trim() : "" },
-			];
-			void mutate({ id: checkout.id, input });
+			void mutate({ id: checkoutId, input: buildInput() });
 		}, 600);
 		return () => clearTimeout(timer.current);
-	}, [checkout?.id, storageKey, type, carrier, taxId, title, loveCode, mutate]);
+	}, [checkout?.id, storageKey, type, carrier, taxId, title, loveCode, mutate, buildInput]);
+
+	// 付款前的保險：debounce 還沒到就按付款的話，這裡把最新選項同步寫完再讓交易送出。
+	// 沒有這一段，「打完統編立刻按付款」＝發票開成綠界載具，而客人要的是公司抬頭的紙本。
+	useEffect(() => {
+		if (!checkout?.id) return;
+		const checkoutId = checkout.id;
+		return registerPendingMetadataFlush(async () => {
+			clearTimeout(timer.current);
+			await mutate({ id: checkoutId, input: buildInput() });
+		});
+	}, [checkout?.id, mutate, buildInput]);
 
 	return (
 		<>

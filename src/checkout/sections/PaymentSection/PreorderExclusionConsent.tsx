@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { gql } from "graphql-tag";
 import { useMutation, useQuery } from "urql";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
+import { registerPendingMetadataFlush } from "@/checkout/lib/pendingMetadata";
 import { useConsentStore } from "@/checkout/state/consentStore";
 import { COOLING_OFF_EXCLUDED_KEY, isCoolingOffExcluded } from "@/lib/cooling-off";
 
@@ -98,6 +99,8 @@ export const PreorderExclusionConsent = () => {
 			.map((product) => product?.name?.trim())
 			.filter((name): name is string => !!name) ?? [];
 	const hasExcluded = excludedNames.length > 0;
+	// join 成字串再進 useCallback 依賴：陣列每次 render 都是新物件，會讓依賴永遠不相等。
+	const excludedLabel = excludedNames.join(" / ").slice(0, 900);
 
 	// 同步「是否需要除外同意」到 store，供 PaymentSection 的下單閘門判斷。
 	useEffect(() => {
@@ -106,22 +109,37 @@ export const PreorderExclusionConsent = () => {
 		if (!hasExcluded) setPreorderConsent(false);
 	}, [hasExcluded, setPreorderRequired, setPreorderConsent]);
 
+	// 勾選當下的時間才是存證要的時間。付款前的 flush 會重送同一份 metadata，
+	// 若那時再取一次 now，存證時間就會變成「按付款的時間」而非「同意的時間」。
+	const consentAtRef = useRef("");
+
+	const buildInput = useCallback(
+		(checked: boolean) => [
+			{ key: "preorder_exclusion.consent", value: checked ? "true" : "false" },
+			{ key: "preorder_exclusion.at", value: checked ? consentAtRef.current : "" },
+			{ key: "preorder_exclusion.items", value: checked ? excludedLabel : "" },
+			{ key: "preorder_exclusion.basis", value: checked ? COOLING_OFF_EXCLUDED_KEY : "" },
+		],
+		[excludedLabel],
+	);
+
+	// 付款前把存證補寫完再送出交易。原本是勾選當下 `void mutate` 沒有人等，
+	// 勾完立刻按付款就可能在寫入完成前送出——而這是消保法的同意存證，掉了等於沒有。
+	useEffect(() => {
+		if (!checkoutId || !preorderRequired) return;
+		return registerPendingMetadataFlush(async () => {
+			await mutate({ id: checkoutId, input: buildInput(preorderConsent) });
+		});
+	}, [checkoutId, preorderRequired, preorderConsent, mutate, buildInput]);
+
 	if (!preorderRequired) return null;
 
 	const handleToggle = (checked: boolean) => {
 		setPreorderConsent(checked);
+		consentAtRef.current = checked ? new Date().toISOString() : "";
 		if (!checkoutId) return;
 		// 存證：即時寫回 checkout metadata（帶到 order）。
-		const input = [
-			{ key: "preorder_exclusion.consent", value: checked ? "true" : "false" },
-			{ key: "preorder_exclusion.at", value: checked ? new Date().toISOString() : "" },
-			{
-				key: "preorder_exclusion.items",
-				value: checked ? excludedNames.join(" / ").slice(0, 900) : "",
-			},
-			{ key: "preorder_exclusion.basis", value: checked ? COOLING_OFF_EXCLUDED_KEY : "" },
-		];
-		void mutate({ id: checkoutId, input });
+		void mutate({ id: checkoutId, input: buildInput(checked) });
 	};
 
 	return (

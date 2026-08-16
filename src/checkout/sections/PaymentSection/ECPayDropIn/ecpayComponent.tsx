@@ -8,6 +8,8 @@ import { useTransactionInitializeMutation } from "@/checkout/graphql";
 import { useAlerts } from "@/checkout/hooks/useAlerts";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { useCheckoutComplete } from "@/checkout/hooks/useCheckoutComplete";
+import { flushPendingMetadata } from "@/checkout/lib/pendingMetadata";
+import { API_BASE_URL } from "@/lib/env";
 
 /**
  * 綠界金流支付組件
@@ -45,6 +47,11 @@ export const ECPayComponent = ({ config }: ECPayComponentProps = {}) => {
 	const handlePaymentClick = async () => {
 		try {
 			setIsProcessing(true);
+
+			// 交易一旦送出，checkout metadata 就定案了（Saleor 在 checkoutComplete 時把它複製到
+			// order，api-core 之後只讀得到 order 那份）。發票選項是 600ms debounce 寫回的，
+			// 除外同意是勾選當下 fire-and-forget——兩者都可能還在路上。先等它們寫完。
+			await flushPendingMetadata();
 
 			// 準備返回 URL（當用戶從綠界返回時使用）
 			const { newUrl: returnUrl } = getUrlForTransactionInitialize();
@@ -138,12 +145,12 @@ export const ECPayComponent = ({ config }: ECPayComponentProps = {}) => {
 					// 如果 redirectUrl 是以 / 開頭，代表它是相對路徑，需要補上後端的 Domain
 					let finalRedirectUrl: string;
 					if (redirectUrl.startsWith("/")) {
-						// 優先使用 NEXT_PUBLIC_API_URL（後端 API），如果沒有則使用 Saleor API URL
-						const backendUrl =
-							process.env.NEXT_PUBLIC_API_URL ||
-							process.env.NEXT_PUBLIC_SALEOR_API_URL ||
-							"http://localhost:8000";
-						finalRedirectUrl = `${backendUrl}${redirectUrl}`;
+						// 相對路徑補上 api-core 的對外位址。
+						// 這裡原本還會退回 Saleor API URL 再退回 localhost:8000——但 `/api/v1/...`
+						// 這種路徑打到 Saleor 只會 404，打到客人自己的 localhost 則是完全沒反應，
+						// 兩個 fallback 都只是把「設定沒填」偽裝成「付款壞了」。改由 lib/env 統一
+						// 把關：正式環境沒設就 build 不過去。
+						finalRedirectUrl = `${API_BASE_URL}${redirectUrl}`;
 					} else {
 						finalRedirectUrl = redirectUrl;
 					}

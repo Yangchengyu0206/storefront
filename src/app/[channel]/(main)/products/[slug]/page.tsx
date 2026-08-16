@@ -8,6 +8,7 @@ import { AddButton } from "./AddButton";
 import { VariantSelector } from "@/ui/components/VariantSelector";
 import { ProductImageWrapper } from "@/ui/atoms/ProductImageWrapper";
 import { executeGraphQL } from "@/lib/graphql";
+import { STOREFRONT_URL } from "@/lib/env";
 import { formatMoney, formatMoneyRange } from "@/lib/utils";
 import { CheckoutAddLineDocument, ProductDetailsDocument, ProductListDocument } from "@/gql/graphql";
 import * as Checkout from "@/lib/checkout";
@@ -50,10 +51,9 @@ export async function generateMetadata(
 			// 少了它產生的網址是 404（實跑 curl /products/test → 404，全站只有根路徑有轉址）。
 			// Google 讀到 canonical 指向 404 會判定這頁不是正規版本而不收錄或降權，
 			// 等於整站商品頁拿不到自然搜尋流量。
-			canonical: process.env.NEXT_PUBLIC_STOREFRONT_URL
-				? process.env.NEXT_PUBLIC_STOREFRONT_URL +
-					`/${encodeURIComponent(params.channel)}/products/${encodeURIComponent(params.slug)}`
-				: undefined,
+			canonical: `${STOREFRONT_URL}/${encodeURIComponent(params.channel)}/products/${encodeURIComponent(
+				params.slug,
+			)}`,
 		},
 		openGraph: product.thumbnail
 			? {

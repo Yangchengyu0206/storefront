@@ -77,6 +77,12 @@ const securityHeaders = [
 ];
 
 const config = {
+	// 允許把 build 產物放到別的目錄。
+	// 開發時 `next dev` 會一直持有 `.next/`，同時跑 `next build` 會在 Windows 上互相搶
+	// 檔案鎖，結果是 build 印完橫幅之後就**永遠卡住、沒有任何錯誤訊息**（2026-08-16 踩到，
+	// 排查花了不少時間）。要在不關 dev server 的情況下驗證 build，用：
+	//     NEXT_DIST_DIR=.next-build npx next build
+	distDir: process.env.NEXT_DIST_DIR || ".next",
 	images: {
 		remotePatterns: [
 			{

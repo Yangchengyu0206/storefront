@@ -14,15 +14,42 @@ export default async function OrderDetailPage(props: { params: Promise<{ id: str
 	const params = await props.params;
 	const orderId = decodeURIComponent(params.id);
 
-	const { me: user } = await executeGraphQL(CurrentUserOrderListDocument, {
-		cache: "no-cache",
-	});
+	// 這頁只能靠 `me.orders` 找訂單：Saleor 的 `Query.order(id:)` 需要 MANAGE_ORDERS
+	// （3.22.16 schema.py:191），storefront 不該持有那個權限。
+	//
+	// 原本抓固定的前 10 筆再用 find 比對 id——也就是說**第 11 張以後的訂單，
+	// 明細頁一律 404**，而客人是從自己的訂單列表點進來的，看起來就像訂單消失了。
+	// 改成逐頁往後找；上限 10 頁（1000 張）純粹是防呆，避免資料異常時無限迴圈。
+	const PAGE_SIZE = 100;
+	const MAX_PAGES = 10;
+
+	const fetchOrderPage = (after: string | null) =>
+		executeGraphQL(CurrentUserOrderListDocument, {
+			variables: { first: PAGE_SIZE, after },
+			cache: "no-cache",
+		});
+	type OrderListResult = Awaited<ReturnType<typeof fetchOrderPage>>;
+
+	let user: OrderListResult["me"] = null;
+	let order: NonNullable<NonNullable<OrderListResult["me"]>["orders"]>["edges"][number]["node"] | undefined;
+	let after: string | null = null;
+
+	for (let page = 0; page < MAX_PAGES; page++) {
+		const result = await fetchOrderPage(after);
+		user = result.me;
+		if (!user) break;
+
+		order = (user.orders?.edges || []).map((edge) => edge.node).find((node) => node.id === orderId);
+		if (order) break;
+
+		const pageInfo = user.orders?.pageInfo;
+		if (!pageInfo?.hasNextPage) break;
+		after = pageInfo.endCursor ?? null;
+	}
 
 	if (!user) {
 		return <LoginForm channel={params.channel} />;
 	}
-
-	const order = (user.orders?.edges || []).map((edge) => edge.node).find((node) => node.id === orderId);
 
 	if (!order) {
 		notFound();
@@ -161,8 +188,8 @@ export default async function OrderDetailPage(props: { params: Promise<{ id: str
 									<span className="text-neutral-400">尚未取得物流編號</span>
 								)}
 								{f.created && (
-									<time dateTime={f.created } className="text-neutral-400">
-										{formatDate(new Date(f.created ))}
+									<time dateTime={f.created} className="text-neutral-400">
+										{formatDate(new Date(f.created))}
 									</time>
 								)}
 							</li>
