@@ -33,7 +33,7 @@ export const PaymentSection = () => {
 				<Title>付款方式</Title>
 
 				{/* R7: explicit consent gate — the order cannot proceed until checked. */}
-				<label className="mb-4 flex items-start gap-2 text-sm text-neutral-700" data-testid="consentCheckbox">
+				<label className="mb-4 flex items-start gap-2 text-sm text-ink-700" data-testid="consentCheckbox">
 					<input
 						type="checkbox"
 						className="mt-0.5"
@@ -60,7 +60,7 @@ export const PaymentSection = () => {
 				{canPay ? (
 					<PaymentMethods />
 				) : (
-					<p className="text-sm text-neutral-500" data-testid="consentRequiredNotice">
+					<p className="text-sm text-ink-500" data-testid="consentRequiredNotice">
 						{preorderRequired && !preorderConsent && privacyConsent
 							? "本次訂單包含不適用七日鑑賞期之客製化給付商品，請先勾選上方除外同意，即可完成下單。"
 							: "請先勾選上方同意條款，即可選擇付款方式並完成下單。"}

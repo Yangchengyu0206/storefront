@@ -10,7 +10,7 @@ export default function PrivacyPage() {
 	return (
 		<>
 			<h1>隱私權政策</h1>
-			<p className="text-sm text-neutral-500">最後更新日期：{LEGAL_LAST_UPDATED}</p>
+			<p className="text-sm text-ink-500">最後更新日期：{LEGAL_LAST_UPDATED}</p>
 
 			<p>
 				{companyInfo.name}

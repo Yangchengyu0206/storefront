@@ -2,6 +2,102 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-	overflow-x: hidden;
+@layer base {
+	/*
+	 * Merchant-themeable palette.
+	 *
+	 * Only these values need to change to re-skin the store for a different
+	 * merchant. Components never hardcode a hex; they use the `accent` / `ink`
+	 * scales defined in tailwind.config.ts, which read from here.
+	 *
+	 * Values are space-separated RGB channels so Tailwind can apply opacity
+	 * modifiers (`bg-accent/10`).
+	 */
+	:root {
+		/* Accent: a deep evergreen. Reads as considered retail rather than the
+		   default Tailwind blue, and stays clear of the red/amber/green the UI
+		   uses for real state. */
+		--accent: 22 82 66;
+		--accent-fg: 255 255 255;
+		--accent-subtle: 236 246 242;
+
+		/* One neutral family, very slightly warm so photography sits well on it. */
+		--ink-50: 250 250 249;
+		--ink-100: 245 245 244;
+		--ink-200: 231 230 228;
+		--ink-300: 214 212 209;
+		--ink-400: 163 161 157;
+		--ink-500: 122 120 116;
+		--ink-600: 88 86 83;
+		--ink-700: 68 66 63;
+		--ink-800: 41 40 38;
+		--ink-900: 28 27 26;
+		--ink-950: 23 22 21;
+	}
+
+	html {
+		scroll-behavior: smooth;
+		/* Anchored sections (product tabs, checkout steps) must not land under
+		   the sticky header. */
+		scroll-padding-top: 6rem;
+	}
+
+	body {
+		overflow-x: hidden;
+		color: rgb(var(--ink-900));
+		background-color: rgb(var(--ink-50));
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		text-wrap: pretty;
+	}
+
+	h1,
+	h2,
+	h3 {
+		letter-spacing: -0.02em;
+		text-wrap: balance;
+	}
+
+	::selection {
+		background-color: rgb(var(--accent-subtle));
+		color: rgb(var(--accent));
+	}
+
+	/* Keyboard users must always see where they are. The stock outline is
+	   inconsistent across the form plugin's controls, so it is unified here. */
+	:focus-visible {
+		outline: 2px solid rgb(var(--accent));
+		outline-offset: 2px;
+		border-radius: 0.25rem;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		html {
+			scroll-behavior: auto;
+		}
+		*,
+		*::before,
+		*::after {
+			animation-duration: 0.01ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.01ms !important;
+		}
+	}
+}
+
+@layer components {
+	/* Prices, quantities and order numbers line up down a column instead of
+	   dancing as digits change. */
+	.tabular {
+		font-variant-numeric: tabular-nums;
+		font-feature-settings: "tnum" 1;
+	}
+
+	/* Skip link: first tab stop on every page, invisible until focused. */
+	.skip-link {
+		@apply sr-only;
+	}
+	.skip-link:focus {
+		@apply not-sr-only fixed left-4 top-4 z-50 rounded-control bg-accent px-4 py-2 text-sm font-medium text-accent-fg shadow-lift;
+	}
 }

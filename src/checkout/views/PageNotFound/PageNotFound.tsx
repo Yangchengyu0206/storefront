@@ -1,7 +1,8 @@
 import { type FallbackProps } from "react-error-boundary";
-import { SaleorLogo } from "@/checkout/assets/images/SaleorLogo";
 import { Button } from "@/checkout/components/Button";
 import { ErrorContentWrapper } from "@/checkout/components/ErrorContentWrapper";
+
+const storeName = process.env.NEXT_PUBLIC_SELLER_NAME || "本店";
 
 export const PageNotFound = ({ error }: Partial<FallbackProps>) => {
 	console.error(error);
@@ -11,11 +12,13 @@ export const PageNotFound = ({ error }: Partial<FallbackProps>) => {
 
 	return (
 		<ErrorContentWrapper>
-			<div className="mb-4 flex w-28 flex-col">
-				<SaleorLogo />
-			</div>
-			<p>We couldn&apos;t fetch information about your checkout. Go back to the store and try again.</p>
-			<Button ariaLabel="Go back to store" onClick={goBack} variant="secondary" label="Go back to store" />
+			{/* This used to render the commerce vendor's logo, on a page a customer
+			    of {storeName} would only ever reach mid-checkout. It now shows the
+			    store's own name, and the copy is in the language the rest of the
+			    site is written in. */}
+			<p className="text-lg font-semibold text-ink-900">{storeName}</p>
+			<p className="text-ink-600">讀不到這筆結帳資料，可能是連結已過期或已完成結帳。</p>
+			<Button ariaLabel="回到商店" onClick={goBack} variant="secondary" label="回到商店" />
 		</ErrorContentWrapper>
 	);
 };

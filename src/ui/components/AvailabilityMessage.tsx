@@ -6,7 +6,7 @@ type Props = {
 	leadTimeDays?: number | null;
 };
 
-const pClasses = "ml-1 text-sm font-semibold text-neutral-500";
+const pClasses = "ml-1 text-sm font-semibold text-ink-500";
 
 export const AvailabilityMessage = ({ isAvailable, isPreorder, leadTimeDays }: Props) => {
 	// 預購：一律可訂，顯示「預計X日出貨」（代購「先賣後買」）
@@ -26,7 +26,7 @@ export const AvailabilityMessage = ({ isAvailable, isPreorder, leadTimeDays }: P
 	if (!isAvailable) {
 		return (
 			<div className="mt-6 flex items-center">
-				<XIcon className="h-5 w-5 flex-shrink-0 text-neutral-50" aria-hidden="true" />
+				<XIcon className="h-5 w-5 flex-shrink-0 text-ink-50" aria-hidden="true" />
 				<p className={pClasses}>已售完</p>
 			</div>
 		);

@@ -23,11 +23,11 @@ export default async function Page(props: { params: Promise<{ channel: string }>
 	if (!checkout || checkout.lines.length < 1) {
 		return (
 			<section className="mx-auto max-w-7xl p-8">
-				<h1 className="mt-8 text-3xl font-bold text-neutral-900">您的購物車是空的</h1>
-				<p className="my-12 text-sm text-neutral-500">您還沒有將任何商品加入購物車。</p>
+				<h1 className="mt-8 text-3xl font-bold text-ink-900">您的購物車是空的</h1>
+				<p className="my-12 text-sm text-ink-500">您還沒有將任何商品加入購物車。</p>
 				<LinkWithChannel
 					href="/products"
-					className="inline-block max-w-full rounded border border-transparent bg-neutral-900 px-6 py-3 text-center font-medium text-neutral-50 hover:bg-neutral-800 aria-disabled:cursor-not-allowed aria-disabled:bg-neutral-500 sm:px-16"
+					className="inline-block max-w-full rounded border border-transparent bg-ink-900 px-6 py-3 text-center font-medium text-ink-50 hover:bg-ink-800 aria-disabled:cursor-not-allowed aria-disabled:bg-ink-500 sm:px-16"
 				>
 					繼續購物
 				</LinkWithChannel>
@@ -37,16 +37,16 @@ export default async function Page(props: { params: Promise<{ channel: string }>
 
 	return (
 		<section className="mx-auto max-w-7xl p-8">
-			<h1 className="mt-8 text-3xl font-bold text-neutral-900">您的購物車</h1>
+			<h1 className="mt-8 text-3xl font-bold text-ink-900">您的購物車</h1>
 			<form className="mt-12">
 				<ul
 					data-testid="CartProductList"
 					role="list"
-					className="divide-y divide-neutral-200 border-b border-t border-neutral-200"
+					className="divide-y divide-ink-200 border-b border-t border-ink-200"
 				>
 					{checkout.lines.map((item) => (
 						<li key={item.id} className="flex py-4">
-							<div className="aspect-square h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border bg-neutral-50 sm:h-32 sm:w-32">
+							<div className="aspect-square h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border bg-ink-50 sm:h-32 sm:w-32">
 								{item.variant?.product?.thumbnail?.url && (
 									<Image
 										src={item.variant.product.thumbnail.url}
@@ -66,14 +66,14 @@ export default async function Page(props: { params: Promise<{ channel: string }>
 												variantId: item.variant.id,
 											})}
 										>
-											<h2 className="font-medium text-neutral-700">{item.variant?.product?.name}</h2>
+											<h2 className="font-medium text-ink-700">{item.variant?.product?.name}</h2>
 										</LinkWithChannel>
-										<p className="mt-1 text-sm text-neutral-500">{item.variant?.product?.category?.name}</p>
+										<p className="mt-1 text-sm text-ink-500">{item.variant?.product?.category?.name}</p>
 										{item.variant.name !== item.variant.id && Boolean(item.variant.name) && (
-											<p className="mt-1 text-sm text-neutral-500">規格：{item.variant.name}</p>
+											<p className="mt-1 text-sm text-ink-500">規格：{item.variant.name}</p>
 										)}
 									</div>
-									<p className="text-right font-semibold text-neutral-900">
+									<p className="text-right font-semibold text-ink-900">
 										{formatMoney(item.totalPrice.gross.amount, item.totalPrice.gross.currency)}
 									</p>
 								</div>
@@ -87,13 +87,13 @@ export default async function Page(props: { params: Promise<{ channel: string }>
 				</ul>
 
 				<div className="mt-12">
-					<div className="rounded border bg-neutral-50 px-4 py-2">
+					<div className="rounded border bg-ink-50 px-4 py-2">
 						<div className="flex items-center justify-between gap-2 py-2">
 							<div>
-								<p className="font-semibold text-neutral-900">總計</p>
+								<p className="font-semibold text-ink-900">總計</p>
 								<ShippingNotice info={shippingInfo} subtotal={checkout.totalPrice.gross.amount} />
 							</div>
-							<div className="font-medium text-neutral-900">
+							<div className="font-medium text-ink-900">
 								{formatMoney(checkout.totalPrice.gross.amount, checkout.totalPrice.gross.currency)}
 							</div>
 						</div>

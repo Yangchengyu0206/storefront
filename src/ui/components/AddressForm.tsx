@@ -7,7 +7,7 @@ import { type AccountAddressFragment } from "@/gql/graphql";
 type FormAction = (prev: AccountFormState, formData: FormData) => Promise<AccountFormState>;
 
 const inputCls =
-	"w-full rounded-md border border-neutral-300 bg-neutral-50 px-3 py-2 text-sm focus:border-neutral-800 focus:bg-white focus:outline-none";
+	"w-full rounded-md border border-ink-300 bg-ink-50 px-3 py-2 text-sm focus:border-ink-800 focus:bg-white focus:outline-none";
 
 export function AddressForm({
 	action,
@@ -79,7 +79,7 @@ export function AddressForm({
 			<button
 				type="submit"
 				disabled={pending}
-				className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-60"
+				className="rounded-md bg-ink-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-ink-700 disabled:cursor-not-allowed disabled:opacity-60"
 			>
 				{pending ? "儲存中…" : submitLabel}
 			</button>

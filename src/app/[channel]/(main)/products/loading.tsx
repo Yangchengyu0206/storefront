@@ -1,9 +1,9 @@
-import { Loader } from "@/ui/atoms/Loader";
+import { ProductListSkeleton } from "@/ui/components/ProductListSkeleton";
 
 export default function Loading() {
 	return (
-		<div className="flex min-h-screen flex-col items-center justify-center">
-			<Loader />
-		</div>
+		<section className="mx-auto max-w-7xl p-8 pb-16">
+			<ProductListSkeleton count={9} />
+		</section>
 	);
 }

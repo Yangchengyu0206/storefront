@@ -68,7 +68,7 @@ export default async function Page(props: {
 			) : (
 				<div className="mx-auto max-w-lg py-16 text-center">
 					<h1 className="text-xl font-semibold">找不到「{searchValue}」的相關商品</h1>
-					<p className="mt-3 text-sm text-neutral-600">
+					<p className="mt-3 text-sm text-ink-600">
 						可以試試看更簡短的關鍵字，或是換個說法（例如只打品牌或品項名稱）。
 					</p>
 				</div>

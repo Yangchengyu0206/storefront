@@ -10,7 +10,7 @@ import { type ShippingInfo } from "@/lib/shipping-info";
 export function ShippingNotice({ info, subtotal }: { info: ShippingInfo | null; subtotal: number }) {
 	if (!info) {
 		// 取不到設定時維持原本的說法，不猜金額
-		return <p className="mt-1 text-sm text-neutral-500">運費將於下一步計算</p>;
+		return <p className="mt-1 text-sm text-ink-500">運費將於下一步計算</p>;
 	}
 
 	const { currency, feeCvs, feeHome, freeThreshold } = info;
@@ -20,13 +20,13 @@ export function ShippingNotice({ info, subtotal }: { info: ShippingInfo | null; 
 
 	return (
 		<div className="mt-1 space-y-1 text-sm">
-			<p className="text-neutral-500">
+			<p className="text-ink-500">
 				運費：超商取貨 {formatMoney(feeCvs, currency)}、宅配 {formatMoney(feeHome, currency)}
 				（結帳時依您選擇的方式計算）
 			</p>
 			{reached && <p className="font-medium text-green-700">已達免運門檻，這筆訂單免運費</p>}
 			{hasThreshold && !reached && (
-				<p className="text-neutral-700">
+				<p className="text-ink-700">
 					再購買 <span className="font-medium">{formatMoney(remaining, currency)}</span> 即可免運 （滿{" "}
 					{formatMoney(freeThreshold, currency)}）
 				</p>

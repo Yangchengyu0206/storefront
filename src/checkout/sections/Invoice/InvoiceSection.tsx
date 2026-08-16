@@ -39,7 +39,7 @@ const OPTIONS: { value: InvoiceType; label: string; hint?: string }[] = [
 ];
 
 const inputCls =
-	"w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm focus:border-neutral-800 focus:outline-none";
+	"w-full rounded-md border border-ink-300 bg-white px-3 py-2 text-sm focus:border-ink-800 focus:outline-none";
 
 export function InvoiceSection() {
 	const { checkout } = useCheckout();
@@ -129,7 +129,7 @@ export function InvoiceSection() {
 								onChange={() => setType(opt.value)}
 							/>
 							<span>{opt.label}</span>
-							{opt.hint && <span className="text-xs text-neutral-400">（{opt.hint}）</span>}
+							{opt.hint && <span className="text-xs text-ink-400">（{opt.hint}）</span>}
 						</label>
 					))}
 				</div>

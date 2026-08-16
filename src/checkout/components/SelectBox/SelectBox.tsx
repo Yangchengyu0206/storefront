@@ -27,9 +27,9 @@ export const SelectBox = <TFieldName extends string>({
 	return (
 		<label
 			className={clsx(
-				"relative mb-2 flex cursor-pointer flex-row items-center justify-start rounded border border-neutral-400 px-3 py-2",
-				"hover:border hover:border-neutral-500",
-				{ "border border-neutral-500": selected, "pointer-events-none hover:border-neutral-400": disabled },
+				"relative mb-2 flex cursor-pointer flex-row items-center justify-start rounded border border-ink-400 px-3 py-2",
+				"hover:border hover:border-ink-500",
+				{ "border border-ink-500": selected, "pointer-events-none hover:border-ink-400": disabled },
 				className,
 			)}
 		>
@@ -39,7 +39,7 @@ export const SelectBox = <TFieldName extends string>({
 				onChange={handleChange}
 				value={value}
 				checked={selected}
-				className="rounded-full border-neutral-300 text-neutral-600 shadow-sm focus:border-neutral-300 focus:ring focus:ring-neutral-200 focus:ring-opacity-50 focus:ring-offset-0"
+				className="rounded-full border-ink-300 text-ink-600 shadow-sm focus:border-ink-300 focus:ring focus:ring-ink-200 focus:ring-opacity-50 focus:ring-offset-0"
 			/>
 			<span className="ml-2 block w-full">{children}</span>
 		</label>

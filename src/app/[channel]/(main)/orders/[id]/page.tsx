@@ -57,38 +57,38 @@ export default async function OrderDetailPage(props: { params: Promise<{ id: str
 
 	return (
 		<div className="mx-auto max-w-5xl p-8">
-			<LinkWithChannel href="/orders" className="text-sm text-neutral-500 hover:text-neutral-700">
+			<LinkWithChannel href="/orders" className="text-sm text-ink-500 hover:text-ink-700">
 				&larr; 返回我的訂單
 			</LinkWithChannel>
 
 			<div className="mt-4 flex flex-wrap items-center justify-between gap-4">
-				<h1 className="text-2xl font-bold tracking-tight text-neutral-900">訂單 #{order.number}</h1>
+				<h1 className="text-2xl font-bold tracking-tight text-ink-900">訂單 #{order.number}</h1>
 				<PaymentStatus status={order.paymentStatus} />
 			</div>
 
-			<dl className="mt-4 grid grid-cols-2 gap-4 rounded border border-neutral-100 bg-white p-4 text-sm sm:grid-cols-3">
+			<dl className="mt-4 grid grid-cols-2 gap-4 rounded border border-ink-100 bg-white p-4 text-sm sm:grid-cols-3">
 				<div className="flex flex-col gap-1">
-					<dt className="font-medium text-neutral-900">下單日期</dt>
-					<dd className="text-neutral-600">
+					<dt className="font-medium text-ink-900">下單日期</dt>
+					<dd className="text-ink-600">
 						<time dateTime={order.created}>{formatDate(new Date(order.created))}</time>
 					</dd>
 				</div>
 				<div className="flex flex-col gap-1">
-					<dt className="font-medium text-neutral-900">付款狀態</dt>
-					<dd className="text-neutral-600">
+					<dt className="font-medium text-ink-900">付款狀態</dt>
+					<dd className="text-ink-600">
 						<PaymentStatus status={order.paymentStatus} />
 					</dd>
 				</div>
 				<div className="flex flex-col gap-1">
-					<dt className="font-medium text-neutral-900">訂單總額</dt>
-					<dd className="text-neutral-900">
+					<dt className="font-medium text-ink-900">訂單總額</dt>
+					<dd className="text-ink-900">
 						{formatMoney(order.total.gross.amount, order.total.gross.currency)}
 					</dd>
 				</div>
 			</dl>
 
-			<div className="mt-8 rounded border border-neutral-100 bg-white">
-				<table className="w-full text-sm text-neutral-500">
+			<div className="mt-8 rounded border border-ink-100 bg-white">
+				<table className="w-full text-sm text-ink-500">
 					<thead className="sr-only">
 						<tr>
 							<td>商品</td>
@@ -107,7 +107,7 @@ export default async function OrderDetailPage(props: { params: Promise<{ id: str
 									<td className="py-6 pl-6 pr-6 md:w-[60%]">
 										<div className="flex flex-row items-center">
 											{product.thumbnail && (
-												<div className="mr-4 aspect-square h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border bg-neutral-50">
+												<div className="mr-4 aspect-square h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border bg-ink-50">
 													<Image
 														src={product.thumbnail.url}
 														alt={product.thumbnail.alt ?? ""}
@@ -123,7 +123,7 @@ export default async function OrderDetailPage(props: { params: Promise<{ id: str
 														productSlug: product.slug,
 														variantId: item.variant.id,
 													})}
-													className="font-medium text-neutral-900"
+													className="font-medium text-ink-900"
 												>
 													{product.name}
 												</LinkWithChannel>
@@ -141,7 +141,7 @@ export default async function OrderDetailPage(props: { params: Promise<{ id: str
 												item.variant.pricing.price.gross.currency,
 											)}
 									</td>
-									<td className="py-6 pr-6 text-end text-neutral-900">
+									<td className="py-6 pr-6 text-end text-ink-900">
 										{item.variant.pricing?.price &&
 											formatMoney(
 												item.variant.pricing.price.gross.amount * item.quantity,
@@ -153,22 +153,20 @@ export default async function OrderDetailPage(props: { params: Promise<{ id: str
 						})}
 					</tbody>
 				</table>
-				<dl className="flex justify-between border-t px-6 py-6 text-sm font-medium text-neutral-900">
+				<dl className="flex justify-between border-t px-6 py-6 text-sm font-medium text-ink-900">
 					<dt>總計（含運費）</dt>
 					<dd>{formatMoney(order.total.gross.amount, order.total.gross.currency)}</dd>
 				</dl>
 			</div>
 
-			<div className="mt-8 rounded border border-neutral-100 bg-white p-6">
-				<h2 className="text-sm font-semibold text-neutral-900">出貨與物流追蹤</h2>
-				<p className="mt-2 text-sm text-neutral-600">
+			<div className="mt-8 rounded border border-ink-100 bg-white p-6">
+				<h2 className="text-sm font-semibold text-ink-900">出貨與物流追蹤</h2>
+				<p className="mt-2 text-sm text-ink-600">
 					出貨狀態：
-					<span className="font-medium text-neutral-900">
-						{ORDER_STATUS_LABEL[order.status] ?? order.status}
-					</span>
+					<span className="font-medium text-ink-900">{ORDER_STATUS_LABEL[order.status] ?? order.status}</span>
 				</p>
 				{order.shippingAddress && (
-					<p className="mt-1 text-sm text-neutral-600">
+					<p className="mt-1 text-sm text-ink-600">
 						收件：{order.shippingAddress.lastName}
 						{order.shippingAddress.firstName}，{order.shippingAddress.postalCode} {order.shippingAddress.city}
 						{order.shippingAddress.streetAddress1}
@@ -178,17 +176,17 @@ export default async function OrderDetailPage(props: { params: Promise<{ id: str
 					<ul className="mt-3 divide-y text-sm">
 						{order.fulfillments.map((f) => (
 							<li key={f.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2">
-								<span className="text-neutral-900">{FULFILLMENT_STATUS_LABEL[f.status] ?? f.status}</span>
+								<span className="text-ink-900">{FULFILLMENT_STATUS_LABEL[f.status] ?? f.status}</span>
 								{f.trackingNumber ? (
-									<span className="text-neutral-600">
+									<span className="text-ink-600">
 										物流編號 / 取貨編號：
-										<span className="select-all font-medium text-neutral-900">{f.trackingNumber}</span>
+										<span className="select-all font-medium text-ink-900">{f.trackingNumber}</span>
 									</span>
 								) : (
-									<span className="text-neutral-400">尚未取得物流編號</span>
+									<span className="text-ink-400">尚未取得物流編號</span>
 								)}
 								{f.created && (
-									<time dateTime={f.created} className="text-neutral-400">
+									<time dateTime={f.created} className="text-ink-400">
 										{formatDate(new Date(f.created))}
 									</time>
 								)}
@@ -196,13 +194,13 @@ export default async function OrderDetailPage(props: { params: Promise<{ id: str
 						))}
 					</ul>
 				) : (
-					<p className="mt-3 text-sm text-neutral-400">
+					<p className="mt-3 text-sm text-ink-400">
 						尚未出貨。預購商品備貨中，到貨後會依訂單順序出貨並通知你。
 					</p>
 				)}
 			</div>
 
-			<p className="mt-6 text-xs text-neutral-400">如需協助，請聯絡客服並提供訂單編號 #{order.number}。</p>
+			<p className="mt-6 text-xs text-ink-400">如需協助，請聯絡客服並提供訂單編號 #{order.number}。</p>
 		</div>
 	);
 }

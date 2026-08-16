@@ -21,8 +21,8 @@ export function LegalNav() {
 						className={clsx(
 							"block rounded-md px-3 py-2 text-sm transition-colors",
 							isActive
-								? "bg-neutral-100 font-medium text-neutral-900"
-								: "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900",
+								? "bg-ink-100 font-medium text-ink-900"
+								: "text-ink-500 hover:bg-ink-50 hover:text-ink-900",
 						)}
 					>
 						{page.title}

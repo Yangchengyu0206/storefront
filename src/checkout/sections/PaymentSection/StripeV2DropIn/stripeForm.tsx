@@ -171,7 +171,7 @@ export function CheckoutForm() {
 		<form className="my-8 flex flex-col gap-y-6" onSubmit={handleSubmit}>
 			<PaymentElement className="payment-element" options={paymentElementOptions} />
 			<button
-				className="h-12 items-center rounded-md bg-neutral-900 px-6 py-3 text-base font-medium leading-6 text-white shadow hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-70 hover:disabled:bg-neutral-700 aria-disabled:cursor-not-allowed aria-disabled:opacity-70 hover:aria-disabled:bg-neutral-700"
+				className="h-12 items-center rounded-md bg-ink-900 px-6 py-3 text-base font-medium leading-6 text-white shadow hover:bg-ink-800 disabled:cursor-not-allowed disabled:opacity-70 hover:disabled:bg-ink-700 aria-disabled:cursor-not-allowed aria-disabled:opacity-70 hover:aria-disabled:bg-ink-700"
 				aria-disabled={isLoading || !stripe || !elements}
 				id="submit"
 				type="submit"
@@ -188,7 +188,7 @@ function Loader() {
 			<div>
 				<svg
 					aria-hidden="true"
-					className="mr-2 inline h-6 w-6 animate-spin fill-neutral-600 text-neutral-100 dark:text-neutral-600"
+					className="mr-2 inline h-6 w-6 animate-spin fill-ink-600 text-ink-100 dark:text-ink-600"
 					viewBox="0 0 100 101"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"

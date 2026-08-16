@@ -16,12 +16,12 @@ export const getSummaryLineProps = (line: OrderLineFragment | CheckoutLineFragme
 				variantName: line.variant.translation?.name || line.variant.name,
 				productName: line.variant.product.translation?.name || line.variant.product.name,
 				productImage: getThumbnailFromLine(line),
-		  }
+			}
 		: {
 				variantName: line.variantName,
 				productName: line.productName,
 				productImage: line.thumbnail,
-		  };
+			};
 
 export const useSummaryLineLineAttributesText = (line: CheckoutLineFragment | OrderLineFragment): string => {
 	const parsedValues =

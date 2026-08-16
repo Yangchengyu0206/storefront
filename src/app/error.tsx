@@ -26,19 +26,17 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
 	return (
 		<div className="bg-white">
 			<div className="mx-auto max-w-7xl px-6 py-12">
-				<h1 className="text-2xl font-bold leading-10 tracking-tight text-neutral-800">
-					這個頁面暫時出了點問題
-				</h1>
-				<p className="mt-6 max-w-2xl text-base leading-7 text-neutral-600">
+				<h1 className="text-2xl font-bold leading-10 tracking-tight text-ink-800">這個頁面暫時出了點問題</h1>
+				<p className="mt-6 max-w-2xl text-base leading-7 text-ink-600">
 					請稍後再試一次。如果一直遇到同樣的情況，歡迎聯絡客服，我們會協助處理。
 				</p>
 				{error.digest && (
-					<p className="mt-3 text-sm text-neutral-500">
+					<p className="mt-3 text-sm text-ink-500">
 						聯絡客服時可提供這組代碼：<code className="font-mono">{error.digest}</code>
 					</p>
 				)}
 				<button
-					className="mt-8 h-10 rounded-md bg-neutral-900 px-6 font-semibold text-white hover:bg-neutral-800"
+					className="mt-8 h-10 rounded-md bg-ink-900 px-6 font-semibold text-white hover:bg-ink-800"
 					onClick={() => reset()}
 				>
 					重新載入

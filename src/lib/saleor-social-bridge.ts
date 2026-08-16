@@ -70,7 +70,14 @@ async function activateAccountViaApp(email: string): Promise<boolean> {
 	const appToken = process.env.SALEOR_APP_TOKEN;
 	if (!apiUrl || !appToken) return false;
 	// 1) 查 user id
-	const q = /* GraphQL */ `query BridgeGetUser($email: String!) { user(email: $email) { id isActive } }`;
+	const q = /* GraphQL */ `
+		query BridgeGetUser($email: String!) {
+			user(email: $email) {
+				id
+				isActive
+			}
+		}
+	`;
 	const uRes = await fetch(apiUrl, {
 		method: "POST",
 		headers: { "Content-Type": "application/json", Authorization: `Bearer ${appToken}` },
@@ -82,7 +89,18 @@ async function activateAccountViaApp(email: string): Promise<boolean> {
 	if (!user) return false;
 	if (user.isActive) return true;
 	// 2) customerUpdate 啟用
-	const m = /* GraphQL */ `mutation BridgeActivate($id: ID!) { customerUpdate(id: $id, input: { isActive: true }) { user { isActive } errors { code } } }`;
+	const m = /* GraphQL */ `
+		mutation BridgeActivate($id: ID!) {
+			customerUpdate(id: $id, input: { isActive: true }) {
+				user {
+					isActive
+				}
+				errors {
+					code
+				}
+			}
+		}
+	`;
 	const aRes = await fetch(apiUrl, {
 		method: "POST",
 		headers: { "Content-Type": "application/json", Authorization: `Bearer ${appToken}` },

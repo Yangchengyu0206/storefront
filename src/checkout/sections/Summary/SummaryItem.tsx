@@ -17,7 +17,7 @@ export const SummaryItem = ({ line, children }: SummaryItemProps) => {
 
 	return (
 		<li key={line.id} className="flex border-b py-4 last:border-none" data-testid="SummaryItem">
-			<div className="aspect-square h-16 w-16 flex-shrink-0 overflow-hidden rounded border bg-neutral-50 md:h-24 md:w-24 md:bg-white">
+			<div className="aspect-square h-16 w-16 flex-shrink-0 overflow-hidden rounded border bg-ink-50 md:h-24 md:w-24 md:bg-white">
 				{productImage ? (
 					<img
 						src={productImage.url}
@@ -32,7 +32,7 @@ export const SummaryItem = ({ line, children }: SummaryItemProps) => {
 				<div className="flex justify-between justify-items-start gap-4">
 					<div className="flex flex-col gap-y-1">
 						<p className="font-bold">{productName}</p>
-						<p className="text-xs text-neutral-500">{attributesText}</p>
+						<p className="text-xs text-ink-500">{attributesText}</p>
 					</div>
 					{children}
 				</div>

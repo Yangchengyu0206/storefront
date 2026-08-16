@@ -13,9 +13,13 @@ export function NavLink({ href, children }: { href: string; children: ReactEleme
 		<li className="inline-flex">
 			<LinkWithChannel
 				href={href}
+				aria-current={isActive ? "page" : undefined}
 				className={clsx(
-					isActive ? "border-neutral-900 text-neutral-900" : "border-transparent text-neutral-500",
-					"inline-flex items-center border-b-2 pt-px text-sm font-medium hover:text-neutral-700",
+					isActive
+						? "border-accent text-ink-900"
+						: "border-transparent text-ink-500 hover:border-ink-300 hover:text-ink-900",
+					"inline-flex items-center border-b-2 pt-px text-sm font-medium transition-colors duration-150",
+					"focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent",
 				)}
 			>
 				{children}

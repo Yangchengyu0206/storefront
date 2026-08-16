@@ -31,7 +31,7 @@ export default async function OrderPage({
 		return (
 			<>
 				<LoginForm channel={channel} />
-				<p className="mx-auto mt-6 max-w-md text-center text-sm text-neutral-600">
+				<p className="mx-auto mt-6 max-w-md text-center text-sm text-ink-600">
 					以訪客身分結帳、沒有註冊帳號嗎？
 					<LinkWithChannel href="/orders/lookup" className="ml-1 underline">
 						用訂單編號與 Email 查詢
@@ -46,13 +46,13 @@ export default async function OrderPage({
 
 	return (
 		<div className="mx-auto max-w-7xl p-8">
-			<h1 className="text-2xl font-bold tracking-tight text-neutral-900">
+			<h1 className="text-2xl font-bold tracking-tight text-ink-900">
 				{user.firstName ? user.firstName : user.email} 的訂單
 			</h1>
 
 			{orders.length === 0 ? (
 				<div className="mt-8">
-					<div className="rounded border border-neutral-100 bg-white p-4">
+					<div className="rounded border border-ink-100 bg-white p-4">
 						<div className="flex items-center">目前沒有任何訂單</div>
 					</div>
 				</div>

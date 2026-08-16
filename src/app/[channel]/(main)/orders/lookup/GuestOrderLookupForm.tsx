@@ -34,7 +34,7 @@ function SubmitButton() {
 		<button
 			type="submit"
 			disabled={pending}
-			className="rounded bg-neutral-900 px-6 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-400"
+			className="rounded bg-ink-900 px-6 py-2 text-sm font-medium text-white hover:bg-ink-800 disabled:cursor-not-allowed disabled:bg-ink-400"
 		>
 			{pending ? "查詢中…" : "查詢訂單"}
 		</button>
@@ -46,48 +46,48 @@ function OrderResult({ order }: { order: GuestOrderResult }) {
 		new Intl.NumberFormat("zh-TW", { style: "currency", currency: c }).format(n);
 
 	return (
-		<div className="mt-8 rounded border border-neutral-200 bg-white p-6">
-			<div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-neutral-100 pb-4">
-				<h2 className="text-lg font-semibold text-neutral-900">訂單 #{order.number}</h2>
+		<div className="mt-8 rounded border border-ink-200 bg-white p-6">
+			<div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-ink-100 pb-4">
+				<h2 className="text-lg font-semibold text-ink-900">訂單 #{order.number}</h2>
 				{order.created && (
-					<p className="text-sm text-neutral-500">{new Date(order.created).toLocaleString("zh-TW")}</p>
+					<p className="text-sm text-ink-500">{new Date(order.created).toLocaleString("zh-TW")}</p>
 				)}
 			</div>
 
 			<dl className="mt-4 grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">
 				<div>
-					<dt className="text-neutral-500">訂單狀態</dt>
-					<dd className="mt-1 font-medium text-neutral-900">{STATUS_LABEL[order.status] ?? order.status}</dd>
+					<dt className="text-ink-500">訂單狀態</dt>
+					<dd className="mt-1 font-medium text-ink-900">{STATUS_LABEL[order.status] ?? order.status}</dd>
 				</div>
 				<div>
-					<dt className="text-neutral-500">付款狀態</dt>
-					<dd className="mt-1 font-medium text-neutral-900">
+					<dt className="text-ink-500">付款狀態</dt>
+					<dd className="mt-1 font-medium text-ink-900">
 						{PAYMENT_LABEL[order.paymentStatus] ?? order.paymentStatus}
 					</dd>
 				</div>
 				<div>
-					<dt className="text-neutral-500">訂單金額</dt>
-					<dd className="mt-1 font-medium text-neutral-900">{fmt(order.totalAmount, order.currency)}</dd>
+					<dt className="text-ink-500">訂單金額</dt>
+					<dd className="mt-1 font-medium text-ink-900">{fmt(order.totalAmount, order.currency)}</dd>
 				</div>
 			</dl>
 
 			{order.trackingNumbers.length > 0 && (
-				<div className="mt-4 rounded bg-neutral-50 p-3 text-sm">
-					<span className="text-neutral-500">物流追蹤號：</span>
-					<span className="font-medium text-neutral-900">{order.trackingNumbers.join("、")}</span>
+				<div className="mt-4 rounded bg-ink-50 p-3 text-sm">
+					<span className="text-ink-500">物流追蹤號：</span>
+					<span className="font-medium text-ink-900">{order.trackingNumbers.join("、")}</span>
 				</div>
 			)}
 
-			<ul className="mt-6 divide-y divide-neutral-100 border-t border-neutral-100">
+			<ul className="mt-6 divide-y divide-ink-100 border-t border-ink-100">
 				{order.lines.map((line, i) => (
 					<li key={`${line.productName}-${i}`} className="flex justify-between py-3 text-sm">
 						<div>
-							<p className="font-medium text-neutral-900">{line.productName}</p>
-							{line.variantName && <p className="text-neutral-500">{line.variantName}</p>}
-							<p className="text-neutral-500">數量 {line.quantity}</p>
+							<p className="font-medium text-ink-900">{line.productName}</p>
+							{line.variantName && <p className="text-ink-500">{line.variantName}</p>}
+							<p className="text-ink-500">數量 {line.quantity}</p>
 						</div>
 						{/* 幣別在訂單層，行項不重複帶（一張訂單不會混幣別） */}
-						<p className="whitespace-nowrap font-medium text-neutral-900">
+						<p className="whitespace-nowrap font-medium text-ink-900">
 							{fmt(line.totalAmount, order.currency)}
 						</p>
 					</li>
@@ -104,7 +104,7 @@ export function GuestOrderLookupForm() {
 		<>
 			<form action={formAction} className="mt-6 space-y-4">
 				<div>
-					<label htmlFor="orderNumber" className="block text-sm font-medium text-neutral-700">
+					<label htmlFor="orderNumber" className="block text-sm font-medium text-ink-700">
 						訂單編號
 					</label>
 					<input
@@ -112,11 +112,11 @@ export function GuestOrderLookupForm() {
 						name="orderNumber"
 						required
 						placeholder="例如 1024"
-						className="mt-1 block w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+						className="mt-1 block w-full rounded border border-ink-300 px-3 py-2 text-sm focus:border-ink-500 focus:outline-none"
 					/>
 				</div>
 				<div>
-					<label htmlFor="email" className="block text-sm font-medium text-neutral-700">
+					<label htmlFor="email" className="block text-sm font-medium text-ink-700">
 						訂購時填寫的 Email
 					</label>
 					<input
@@ -125,7 +125,7 @@ export function GuestOrderLookupForm() {
 						type="email"
 						required
 						placeholder="you@example.com"
-						className="mt-1 block w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+						className="mt-1 block w-full rounded border border-ink-300 px-3 py-2 text-sm focus:border-ink-500 focus:outline-none"
 					/>
 				</div>
 				<SubmitButton />

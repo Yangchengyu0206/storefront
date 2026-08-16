@@ -43,7 +43,7 @@ export const Summary: FC<SummaryProps> = ({
 		<div
 			className={clsx(
 				"z-0 flex h-fit w-full flex-col",
-				"before:fixed before:bottom-0 before:left-1/2 before:top-0 before:-z-10 before:w-1/2 before:border-l before:border-neutral-200 before:bg-neutral-50 before:content-none before:lg:content-['']",
+				"before:fixed before:bottom-0 before:left-1/2 before:top-0 before:-z-10 before:w-1/2 before:border-l before:border-ink-200 before:bg-ink-50 before:content-none before:lg:content-['']",
 			)}
 		>
 			<details open className="group">

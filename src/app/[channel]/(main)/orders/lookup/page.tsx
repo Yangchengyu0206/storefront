@@ -22,14 +22,14 @@ export const metadata = {
 export default async function GuestOrderLookupPage() {
 	return (
 		<div className="mx-auto max-w-3xl p-8">
-			<h1 className="text-2xl font-bold tracking-tight text-neutral-900">訂單查詢</h1>
-			<p className="mt-2 text-sm text-neutral-600">
+			<h1 className="text-2xl font-bold tracking-tight text-ink-900">訂單查詢</h1>
+			<p className="mt-2 text-sm text-ink-600">
 				沒有註冊帳號也可以查詢。請輸入訂單編號與您在結帳時填寫的 Email。
 			</p>
 
 			<GuestOrderLookupForm />
 
-			<p className="mt-8 text-sm text-neutral-500">
+			<p className="mt-8 text-sm text-ink-500">
 				已經有帳號了嗎？
 				<LinkWithChannel href="/orders" className="ml-1 underline">
 					登入後查看所有訂單

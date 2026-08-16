@@ -10,7 +10,7 @@ export default function ReturnsPage() {
 	return (
 		<>
 			<h1>退換貨與退款政策</h1>
-			<p className="text-sm text-neutral-500">最後更新日期：{LEGAL_LAST_UPDATED}</p>
+			<p className="text-sm text-ink-500">最後更新日期：{LEGAL_LAST_UPDATED}</p>
 
 			<p>
 				本政策依《消費者保護法》（下稱「消保法」）及「通訊交易解除權合理例外情事適用準則」訂定，說明您於本服務購買商品後之七日鑑賞期、退換貨流程及退款方式。本政策為

@@ -54,8 +54,8 @@ export function CvsStoreSelector() {
 						onClick={() => setSubType(opt.value)}
 						className={`rounded border px-3 py-1 text-sm ${
 							subType === opt.value
-								? "border-blue-500 bg-blue-50 font-medium text-blue-700"
-								: "border-gray-300 text-gray-700"
+								? "border-accent bg-accent-subtle font-medium text-accent"
+								: "border-ink-300 text-ink-700"
 						}`}
 					>
 						{opt.label}

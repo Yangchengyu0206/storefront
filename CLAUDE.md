@@ -89,6 +89,32 @@ src/app/
 - Checkout page is at `/checkout` (not under `[channel]`) — uses query params for channel
 - `pnpm generate` must be run whenever `.graphql` files change or Saleor schema updates
 
+## Design System (read before touching any visual code)
+
+Rebuilt against the `taste-skill` / `redesign-skill` rulebooks in
+`.claude/skills/`. Tokens live in `tailwind.config.ts` + `src/app/globals.css`.
+
+**Whose brand is this?** The storefront carries the **merchant's** identity, not
+the platform's. `NEXT_PUBLIC_SELLER_NAME` is the single source of the store name
+(logo, `<title>`, checkout heading, footer copyright, checkout error page) and is
+currently `ananaofficial`. Never hardcode a store name in a component, and never
+put "YangTech" here — that is the ops dashboard's brand, not the shop's.
+
+**Locks:**
+
+| Lock   | Rule                                                                                                                                                                                                                                                                          |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Colour | One accent (`accent`, a deep evergreen) and one neutral family (`ink`). Both are CSS variables in `globals.css`, so a new merchant is re-themed by editing ~12 values. Do not use Tailwind's stock `neutral` / `gray` / `blue` / `teal` / `indigo` — they were all swept out. |
+| Shape  | `rounded-control` 6px · `rounded-card` 12px · `rounded-sheet` 16px · `rounded-full`.                                                                                                                                                                                          |
+| Shadow | `shadow-card` / `shadow-lift` / `shadow-sheet`, all tinted to `--ink-950`. No `rgba(0,0,0,…)`.                                                                                                                                                                                |
+| Type   | Geist + Geist Mono via `next/font` (CSS vars `--font-sans` / `--font-mono`), CJK falls through to the platform face. Prices and quantities take the `.tabular` class.                                                                                                         |
+| States | Route segments have shaped skeletons, not spinners: `ProductListSkeleton` for grids, `products/[slug]/loading.tsx` for the detail page. The home page renders a real empty state instead of `return null`.                                                                    |
+| A11y   | `:focus-visible` ring is global; every interactive component keeps it (do not add `outline-none` without a `focus-visible:` replacement). `(main)/layout.tsx` carries the skip link and `<main id="main">`.                                                                   |
+
+The vendor's logo is gone from the checkout 404 page and `SaleorLogo.tsx` is
+deleted. Remaining `Saleor` strings in `src/` are SDK identifiers, env var names
+and codegen output — those stay (see "Do NOT" below).
+
 ## Environment Variables (`.env.local`)
 
 ```
@@ -106,3 +132,4 @@ NEXT_PUBLIC_STRIPE_PK=     # Stripe publishable key
 - Import server-only modules in client components (Next.js will error)
 - Use `pages/` router — this project is 100% App Router
 - Call Saleor API directly from client without going through urql client setup
+- Rename the vendor out of code identifiers (`@saleor/auth-sdk` imports, `NEXT_PUBLIC_SALEOR_API_URL`, `saleorApiUrl`, generated `src/gql/`). De-branding is a **user-visible-surface** job only; renaming these breaks the build for zero customer benefit

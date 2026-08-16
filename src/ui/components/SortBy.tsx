@@ -31,10 +31,10 @@ export const SortBy = () => {
 		<div className="w-auto">
 			<Listbox value={currentSortValue} onChange={handleChange}>
 				<div className="relative mt-1">
-					<Listbox.Button className="relative w-full cursor-pointer bg-transparent py-2 pl-3 pr-10 text-left text-sm font-medium text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-300 sm:text-sm">
+					<Listbox.Button className="relative w-full cursor-pointer bg-transparent py-2 pl-3 pr-10 text-left text-sm font-medium text-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-ink-300 sm:text-sm">
 						<span className="block truncate">{selectedOption.name}</span>
 						<span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-							<ChevronDown className="h-4 w-4 text-neutral-500" aria-hidden="true" />
+							<ChevronDown className="h-4 w-4 text-ink-500" aria-hidden="true" />
 						</span>
 					</Listbox.Button>
 					<Transition
@@ -50,7 +50,7 @@ export const SortBy = () => {
 									className={({ active }) =>
 										clsx(
 											"relative cursor-default select-none py-2 pl-4 pr-4",
-											active ? "bg-neutral-100 text-neutral-900" : "text-neutral-700",
+											active ? "bg-ink-100 text-ink-900" : "text-ink-700",
 										)
 									}
 									value={option.value}

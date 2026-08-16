@@ -12,7 +12,7 @@ import { signIn } from "next-auth/react";
 const enabled = process.env.NEXT_PUBLIC_SOCIAL_LOGIN_ENABLED === "true";
 
 const buttonClass =
-	"flex w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-4 py-2.5 font-medium text-neutral-800 transition hover:bg-neutral-50";
+	"flex w-full items-center justify-center gap-2 rounded-md border border-ink-300 bg-white px-4 py-2.5 font-medium text-ink-800 transition hover:bg-ink-50";
 
 export function SocialLoginButtons({ channel }: { channel: string }) {
 	if (!enabled) {
@@ -24,8 +24,8 @@ export function SocialLoginButtons({ channel }: { channel: string }) {
 	return (
 		<div className="mt-6">
 			<div className="relative mb-4 text-center">
-				<span className="relative z-10 bg-white px-3 text-xs text-neutral-400">或使用社群帳號</span>
-				<span className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-neutral-200" />
+				<span className="relative z-10 bg-white px-3 text-xs text-ink-400">或使用社群帳號</span>
+				<span className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-ink-200" />
 			</div>
 
 			<div className="space-y-2">

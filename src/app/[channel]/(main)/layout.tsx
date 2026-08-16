@@ -17,9 +17,16 @@ export default async function RootLayout(props: {
 
 	return (
 		<>
+			{/* First tab stop on every page. Without it a keyboard user has to walk
+			    the whole nav before reaching content on every navigation. */}
+			<a href="#main" className="skip-link">
+				跳到主要內容
+			</a>
 			<Header channel={channel} />
 			<div className="flex min-h-[calc(100dvh-64px)] flex-col">
-				<main className="flex-1">{props.children}</main>
+				<main id="main" className="flex-1">
+					{props.children}
+				</main>
 				<Footer channel={channel} />
 			</div>
 		</>
