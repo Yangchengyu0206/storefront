@@ -5,12 +5,14 @@ import {
 	AccountAddressCreateDocument,
 	AccountAddressDeleteDocument,
 	AccountAddressUpdateDocument,
+	AccountMeDocument,
 	AccountSetDefaultAddressDocument,
 	AccountUpdateDocument,
 	AddressTypeEnum,
 	CountryCode,
 } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
+import { clearLineBinding } from "@/lib/line-binding";
 
 export type AccountFormState = { error?: string; ok?: boolean } | undefined;
 
@@ -120,4 +122,12 @@ export async function setDefaultAddressAction(channel: string, formData: FormDat
 		cache: "no-cache",
 	});
 	revalidatePath(`/${channel}/account/addresses`);
+}
+
+// 解除 LINE 綁定：一律以登入 cookie 的 me 為準，不接受表單帶進來的 user id。
+export async function unlinkLineAction(channel: string): Promise<void> {
+	const { me } = await executeGraphQL(AccountMeDocument, { cache: "no-cache" });
+	if (!me) return;
+	await clearLineBinding(me.id);
+	revalidatePath(`/${channel}/account`);
 }

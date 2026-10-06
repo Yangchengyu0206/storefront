@@ -1,21 +1,35 @@
-import { updateProfileAction } from "./actions";
+import { unlinkLineAction, updateProfileAction } from "./actions";
 import { AccountMeDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
+import { getLineBinding, lineBindingAvailable } from "@/lib/line-binding";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 import { AccountProfileForm } from "@/ui/components/AccountProfileForm";
+import { LineLinkSection } from "@/ui/components/LineLinkSection";
 import { LoginForm } from "@/ui/components/LoginForm";
 
 export const metadata = {
 	title: "我的帳戶",
 };
 
-export default async function AccountPage({ params }: { params: Promise<{ channel: string }> }) {
+export default async function AccountPage({
+	params,
+	searchParams,
+}: {
+	params: Promise<{ channel: string }>;
+	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
 	const { channel } = await params;
+	const query = await searchParams;
 	const { me } = await executeGraphQL(AccountMeDocument, { cache: "no-cache" });
 
 	if (!me) {
 		return <LoginForm channel={channel} />;
 	}
+
+	const showLine = lineBindingAvailable();
+	const lineBinding = showLine ? await getLineBinding(me.id) : { linked: false as const };
+	const lineNotice =
+		query.line === "linked" ? "linked" : typeof query.line_error === "string" ? query.line_error : undefined;
 
 	return (
 		<div className="mx-auto max-w-3xl p-8">
@@ -32,6 +46,16 @@ export default async function AccountPage({ params }: { params: Promise<{ channe
 					/>
 				</div>
 			</section>
+
+			{showLine ? (
+				<LineLinkSection
+					channel={channel}
+					linked={lineBinding.linked}
+					linkedAt={lineBinding.linked ? lineBinding.linkedAt : null}
+					notice={lineNotice}
+					unlinkAction={unlinkLineAction.bind(null, channel)}
+				/>
+			) : null}
 
 			<nav className="mt-6 flex gap-6 text-sm">
 				<LinkWithChannel href="/account/addresses" className="font-medium text-ink-900 underline">

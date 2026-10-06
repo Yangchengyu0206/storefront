@@ -1,5 +1,7 @@
 import { createHmac } from "node:crypto";
 import { getServerAuthClient } from "@/app/config";
+import { STOREFRONT_URL } from "@/lib/env";
+import { saleorUserIdFromToken, setLineBinding } from "@/lib/line-binding";
 
 // 把「已被 Auth.js 驗證過的社群身分」換成 Saleor 客戶登入。
 //
@@ -48,6 +50,7 @@ async function registerSaleorAccount(input: {
 	password: string;
 	firstName: string;
 	channel: string;
+	redirectUrl: string;
 }): Promise<AccountRegisterResult> {
 	const apiUrl = process.env.NEXT_PUBLIC_SALEOR_API_URL;
 	if (!apiUrl) {
@@ -62,55 +65,41 @@ async function registerSaleorAccount(input: {
 	return (await res.json()) as AccountRegisterResult;
 }
 
-// 用 app token(MANAGE_USERS)把「開了 email 驗證的 channel 下 accountRegister 建立的
-// 未啟用帳號」直接啟用。社群身分的 email 已由 OAuth provider 驗證(見 auth.ts signIn 安全閘),
-// 不需再寄 Saleor 確認信 → channel 的 email 註冊確認信可維持開啟,兩者不衝突。
-async function activateAccountViaApp(email: string): Promise<boolean> {
-	const apiUrl = process.env.NEXT_PUBLIC_SALEOR_API_URL;
-	const appToken = process.env.SALEOR_APP_TOKEN;
-	if (!apiUrl || !appToken) return false;
-	// 1) 查 user id
-	const q = /* GraphQL */ `
-		query BridgeGetUser($email: String!) {
-			user(email: $email) {
-				id
-				isActive
-			}
-		}
-	`;
-	const uRes = await fetch(apiUrl, {
+// 把「剛由 accountRegister 建立、卡在 email 確認」的帳號直接啟用（OAuth 已驗過 email，
+// 見 auth.ts signIn 安全閘），channel 的註冊確認信可以維持開啟。
+// 啟用需要 MANAGE_USERS——storefront 不持有全權 token，由 api-core 代做
+// （api-core 那邊另有守門：只啟用剛建立、非員工的帳號）。
+async function activateNewAccount(email: string): Promise<boolean> {
+	const base = process.env.API_CORE_URL || process.env.NEXT_PUBLIC_API_URL;
+	const secret = process.env.API_CORE_INTERNAL_SECRET;
+	if (!base || !secret) return false;
+	const res = await fetch(`${base.replace(/\/$/, "")}/api/v1/customers/social/activate`, {
 		method: "POST",
-		headers: { "Content-Type": "application/json", Authorization: `Bearer ${appToken}` },
+		headers: { "Content-Type": "application/json", "X-Internal-Token": secret },
 		cache: "no-store",
-		body: JSON.stringify({ query: q, variables: { email } }),
+		body: JSON.stringify({ email }),
 	});
-	const uJson = (await uRes.json()) as { data?: { user?: { id: string; isActive: boolean } | null } };
-	const user = uJson.data?.user;
-	if (!user) return false;
-	if (user.isActive) return true;
-	// 2) customerUpdate 啟用
-	const m = /* GraphQL */ `
-		mutation BridgeActivate($id: ID!) {
-			customerUpdate(id: $id, input: { isActive: true }) {
-				user {
-					isActive
-				}
-				errors {
-					code
-				}
-			}
+	if (!res.ok) return false;
+	return ((await res.json()) as { active?: boolean }).active === true;
+}
+
+// 用 LINE 登入的帳號順手完成 LINE 綁定（通知用）。這個 userId 是 OAuth 剛驗過的本人。
+// 寫入失敗不影響登入——客人之後仍可在「我的帳戶」重新綁定。
+async function recordLineBinding(
+	provider: string,
+	providerAccountId: string,
+	email: string,
+	saleorToken: string,
+): Promise<void> {
+	if (provider !== "line") return;
+	try {
+		const saleorUserId = saleorUserIdFromToken(saleorToken);
+		if (saleorUserId) {
+			await setLineBinding({ saleorUserId, email, lineUserId: providerAccountId, source: "login" });
 		}
-	`;
-	const aRes = await fetch(apiUrl, {
-		method: "POST",
-		headers: { "Content-Type": "application/json", Authorization: `Bearer ${appToken}` },
-		cache: "no-store",
-		body: JSON.stringify({ query: m, variables: { id: user.id } }),
-	});
-	const aJson = (await aRes.json()) as {
-		data?: { customerUpdate?: { user?: { isActive: boolean } | null; errors: { code: string }[] } };
-	};
-	return aJson.data?.customerUpdate?.user?.isActive === true;
+	} catch {
+		// 刻意吞掉：綁定是附帶功能，不能讓登入失敗
+	}
 }
 
 export type BridgeResult = { ok: true } | { ok: false; error: string };
@@ -140,11 +129,20 @@ export async function bridgeSocialLogin(params: {
 	// 1) 老用戶:直接登入(signIn 會把 Saleor token 寫進 cookie)
 	const first = await authClient.signIn({ email, password }, { cache: "no-store" });
 	if (first.data.tokenCreate.token && first.data.tokenCreate.errors.length === 0) {
+		await recordLineBinding(provider, providerAccountId, email, first.data.tokenCreate.token);
 		return { ok: true };
 	}
 
 	// 2) 沒帳號 → 註冊
-	const reg = await registerSaleorAccount({ email, password, firstName, channel });
+	// redirectUrl：channel 開著註冊確認信時 Saleor 規定必填（缺了整個 accountRegister 回
+	// REQUIRED，新客人第一次社群登入必定失敗）。帳號下面會直接啟用，這封信只是附帶寄出。
+	const reg = await registerSaleorAccount({
+		email,
+		password,
+		firstName,
+		channel,
+		redirectUrl: `${STOREFRONT_URL}/${channel}/login`,
+	});
 	const payload = reg.data?.accountRegister;
 	if (reg.errors?.length || !payload) {
 		return { ok: false, error: "register_failed" };
@@ -154,9 +152,10 @@ export async function bridgeSocialLogin(params: {
 	if (payload.errors.length > 0 && !alreadyExists) {
 		return { ok: false, error: payload.errors[0].code || "register_failed" };
 	}
-	if (payload.requiresConfirmation) {
-		// OAuth 已驗證 email(auth.ts 安全閘)→ 用 app token 直接啟用,不寄確認信。
-		const activated = await activateAccountViaApp(email);
+	if (payload.requiresConfirmation && !alreadyExists) {
+		// 只啟用「這次新建」的帳號。email 已存在時那是別人（或客人自己）先前用密碼註冊、
+		// 還沒驗證的帳號，密碼不是我們設的——啟用它等於把帳號交給當初註冊的人。
+		const activated = await activateNewAccount(email);
 		if (!activated) {
 			return { ok: false, error: "activation_failed" };
 		}
@@ -165,6 +164,7 @@ export async function bridgeSocialLogin(params: {
 	// 3) 再登入一次
 	const second = await authClient.signIn({ email, password }, { cache: "no-store" });
 	if (second.data.tokenCreate.token && second.data.tokenCreate.errors.length === 0) {
+		await recordLineBinding(provider, providerAccountId, email, second.data.tokenCreate.token);
 		return { ok: true };
 	}
 

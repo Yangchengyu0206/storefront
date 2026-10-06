@@ -5,23 +5,34 @@ import { loginAction, type LoginState } from "@/app/[channel]/(main)/login/actio
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 import { SocialLoginButtons } from "@/ui/components/SocialLoginButtons";
 
-export function LoginForm({ channel }: { channel: string }) {
+// /api/auth/bridge 失敗時帶回來的 social_error（見 lib/saleor-social-bridge.ts）。
+// 過去登入頁完全不讀它：社群登入失敗只會被默默丟回登入頁，客人不知道發生什麼事。
+const SOCIAL_ERRORS: Record<string, string> = {
+	email_taken: "這個 Email 已經用密碼註冊過了，請改用 Email 和密碼登入。登入後可在「我的帳戶」綁定 LINE。",
+	no_session: "社群登入沒有完成，請再試一次。",
+	missing_identity: "社群登入沒有完成，請再試一次。",
+};
+const SOCIAL_ERROR_FALLBACK = "社群登入暫時無法使用，請改用 Email 登入。";
+
+export function LoginForm({ channel, socialError }: { channel: string; socialError?: string }) {
 	const [state, formAction, pending] = useActionState<LoginState, FormData>(
 		loginAction.bind(null, channel),
 		undefined,
 	);
+	const error =
+		state?.error ?? (socialError ? SOCIAL_ERRORS[socialError] ?? SOCIAL_ERROR_FALLBACK : undefined);
 
 	return (
 		<div className="mx-auto mt-16 w-full max-w-md">
 			<h1 className="mb-6 text-center text-2xl font-semibold text-ink-900">登入</h1>
 
 			<form className="rounded-lg border bg-white p-8 shadow-sm" action={formAction}>
-				{state?.error ? (
+				{error ? (
 					<p
 						role="alert"
 						className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
 					>
-						{state.error}
+						{error}
 					</p>
 				) : null}
 

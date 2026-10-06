@@ -14,7 +14,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 	providers: [
 		Google,
 		// 要拿到 email 需在 LINE Login channel 申請 email 權限;拿不到時 bridge 會用合成 email
-		LINE({ authorization: { params: { scope: "openid profile email" } } }),
+		// bot_prompt=aggressive:授權畫面同時詢問「加官方帳號好友」——沒加好友的人推播不到。
+		// 要在 LINE Login channel 設定「Linked OA」指向客人用的官方帳號才會出現。
+		LINE({ authorization: { params: { scope: "openid profile email", bot_prompt: "aggressive" } } }),
 	],
 	callbacks: {
 		// 安全閘:只允許「OAuth provider 已驗證 email」的身分進入 Saleor 橋接。
