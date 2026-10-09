@@ -13,9 +13,11 @@ import { formatMoney, formatMoneyRange } from "@/lib/utils";
 import { CheckoutAddLineDocument, ProductDetailsDocument, ProductListDocument } from "@/gql/graphql";
 import * as Checkout from "@/lib/checkout";
 import { AvailabilityMessage } from "@/ui/components/AvailabilityMessage";
+import { TrackViewItem } from "@/ui/components/TrackEvent";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import { isCoolingOffExcluded } from "@/lib/cooling-off";
+import { displayVariantName } from "@/lib/variant-name";
 
 export async function generateMetadata(
 	props: {
@@ -155,6 +157,15 @@ export default async function Page(props: {
 				})
 			: "";
 
+	// 行銷追蹤（GA4 view_item / Meta ViewContent）用的商品資料；追蹤未啟用時元件不做事。
+	const trackedPrice = selectedVariant?.pricing?.price?.gross ?? product.pricing?.priceRange?.start?.gross;
+	const trackedItem = {
+		id: selectedVariant?.id ?? product.id,
+		name: product.name,
+		variant: displayVariantName(selectedVariant?.name),
+		price: trackedPrice?.amount ?? null,
+	};
+
 	const productJsonLd: WithContext<Product> = {
 		"@context": "https://schema.org",
 		"@type": "Product",
@@ -196,6 +207,7 @@ export default async function Page(props: {
 					__html: JSON.stringify(productJsonLd),
 				}}
 			/>
+			<TrackViewItem item={trackedItem} currency={trackedPrice?.currency} />
 			<form className="grid gap-2 sm:grid-cols-2 lg:grid-cols-8" action={addItem}>
 				<div className="md:col-span-1 lg:col-span-5">
 					{firstImage && (
@@ -246,7 +258,11 @@ export default async function Page(props: {
 							</div>
 						)}
 						<div className="mt-8">
-							<AddButton disabled={!selectedVariantID || !canOrder} />
+							<AddButton
+								disabled={!selectedVariantID || !canOrder}
+								trackItem={selectedVariant ? trackedItem : undefined}
+								trackCurrency={trackedPrice?.currency}
+							/>
 						</div>
 						{description && (
 							<div className="mt-8 space-y-6 text-sm text-ink-500">

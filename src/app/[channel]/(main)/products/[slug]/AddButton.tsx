@@ -1,8 +1,18 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+import { type AnalyticsItem, trackAddToCart } from "@/lib/analytics";
 
-export function AddButton({ disabled }: { disabled?: boolean }) {
+export function AddButton({
+	disabled,
+	trackItem,
+	trackCurrency,
+}: {
+	disabled?: boolean;
+	/** 行銷追蹤用（GA4 add_to_cart / Meta AddToCart）；追蹤未啟用時 trackAddToCart 是 no-op。 */
+	trackItem?: AnalyticsItem;
+	trackCurrency?: string | null;
+}) {
 	const { pending } = useFormStatus();
 	const isButtonDisabled = disabled || pending;
 
@@ -14,7 +24,13 @@ export function AddButton({ disabled }: { disabled?: boolean }) {
 			data-testid="AddToCartButton"
 			aria-disabled={isButtonDisabled}
 			aria-busy={pending}
-			onClick={(e) => isButtonDisabled && e.preventDefault()}
+			onClick={(e) => {
+				if (isButtonDisabled) {
+					e.preventDefault();
+					return;
+				}
+				if (trackItem) trackAddToCart({ ...trackItem, quantity: 1 }, trackCurrency);
+			}}
 			className="h-12 items-center rounded-md bg-ink-900 px-6 py-3 text-base font-medium leading-6 text-white shadow hover:bg-ink-800 disabled:cursor-not-allowed disabled:opacity-70 hover:disabled:bg-ink-700 aria-disabled:cursor-not-allowed aria-disabled:opacity-70 hover:aria-disabled:bg-ink-700"
 		>
 			{pending ? (

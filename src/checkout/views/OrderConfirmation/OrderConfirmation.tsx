@@ -1,4 +1,5 @@
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
+import { trackPurchase, ANALYTICS_ENABLED } from "@/lib/analytics";
 import { Summary, SummarySkeleton } from "@/checkout/sections/Summary";
 import { OrderInfo } from "@/checkout/sections/OrderInfo";
 import { useOrder } from "@/checkout/hooks/useOrder";
@@ -7,6 +8,41 @@ import { useUser } from "@/checkout/hooks/useUser";
 export const OrderConfirmation = () => {
 	const { order } = useOrder();
 	const { user, authenticated } = useUser();
+
+	// 行銷追蹤：GA4 purchase / Meta Purchase。同一張單只送一次（重新整理確認頁不重複計），
+	// 只在訂單確實屬於目前瀏覽者（下方兩個守門都過）時送。追蹤未啟用時直接略過。
+	const ownsOrder =
+		!!order && !(authenticated && order.userEmail && user?.email && order.userEmail !== user.email);
+	useEffect(() => {
+		if (!ANALYTICS_ENABLED || !order || !ownsOrder) return;
+		const key = `analytics:purchase:${order.id}`;
+		try {
+			if (window.localStorage.getItem(key)) return;
+		} catch {
+			// 無痕模式等拿不到 storage：照送，最多重複計一次。
+		}
+		const timer = window.setTimeout(() => {
+			trackPurchase({
+				transactionId: String(order.number ?? order.id),
+				value: order.total?.gross?.amount ?? 0,
+				currency: order.total?.gross?.currency ?? "TWD",
+				shipping: order.shippingPrice?.gross?.amount,
+				tax: order.total?.tax?.amount,
+				items: (order.lines ?? []).map((line) => ({
+					id: line.id,
+					name: line.productName,
+					price: line.unitPrice?.gross?.amount ?? null,
+					quantity: line.quantity,
+				})),
+			});
+			try {
+				window.localStorage.setItem(key, "1");
+			} catch {
+				// 同上
+			}
+		}, 1500); // 等 afterInteractive 的追蹤腳本初始化
+		return () => window.clearTimeout(timer);
+	}, [order, ownsOrder]);
 
 	// SECURITY (order IDOR): the order id comes from a URL query param, so a
 	// visitor could try to view another customer's order by guessing/enumerating
