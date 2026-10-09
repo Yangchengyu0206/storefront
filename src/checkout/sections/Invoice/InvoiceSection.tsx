@@ -7,6 +7,7 @@ import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { Title } from "@/checkout/components/Title";
 import { Divider } from "@/checkout/components";
 import { registerPendingMetadataFlush } from "@/checkout/lib/pendingMetadata";
+import { isValidTaxId } from "@/lib/tax-id";
 
 /**
  * 電子發票選項——寫入 Checkout metadata（訂單成立後帶到 Order，api-core 開發票時讀取）。
@@ -153,7 +154,13 @@ export function InvoiceSection() {
 							maxLength={8}
 							value={taxId}
 							onChange={(e) => setTaxId(e.target.value.replace(/\D/g, ""))}
+							aria-invalid={taxId.length === 8 && !isValidTaxId(taxId)}
 						/>
+						{taxId.length === 8 && !isValidTaxId(taxId) && (
+							<p className="text-xs text-red-600" role="alert">
+								這組統一編號的檢查碼不正確，請再核對一次；統編錯誤的話發票會改開成一般電子發票。
+							</p>
+						)}
 						<input
 							className={inputCls}
 							placeholder="發票抬頭（公司名稱）"
