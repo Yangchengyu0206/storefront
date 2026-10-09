@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { OrderDirection, ProductOrderField, SearchProductsDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
@@ -71,6 +72,18 @@ export default async function Page(props: {
 					<p className="mt-3 text-sm text-ink-600">
 						可以試試看更簡短的關鍵字，或是換個說法（例如只打品牌或品項名稱）。
 					</p>
+					<div className="mt-8 rounded-card border border-ink-200 bg-white p-6">
+						<p className="text-sm font-medium text-ink-900">店裡沒有？我們可以幫您找</p>
+						<p className="mt-1 text-sm text-ink-600">丟商品連結或截圖給我們，確認貨源後用 Email 回覆報價。</p>
+						<Link
+							href={`/${encodeURIComponent(params.channel)}/wish?${new URLSearchParams({
+								q: searchValue,
+							}).toString()}`}
+							className="mt-4 inline-block rounded-control bg-ink-900 px-5 py-2 text-sm font-medium text-white hover:bg-ink-800"
+						>
+							許願／詢價
+						</Link>
+					</div>
 				</div>
 			)}
 		</section>

@@ -94,6 +94,15 @@ export async function Footer({ channel }: { channel: string }) {
 					</div>
 				)}
 
+				<nav aria-label="顧客服務" className="flex flex-wrap gap-x-6 gap-y-2 border-t border-ink-200 py-6">
+					<LinkWithChannel href="/wish" className="text-sm text-ink-500 hover:text-ink-900">
+						許願／詢價
+					</LinkWithChannel>
+					<LinkWithChannel href="/orders/lookup" className="text-sm text-ink-500 hover:text-ink-900">
+						訂單查詢
+					</LinkWithChannel>
+				</nav>
+
 				<nav aria-label="法律資訊" className="flex flex-wrap gap-x-6 gap-y-2 border-t border-ink-200 py-6">
 					{legalPages.map((page) => (
 						<LinkWithChannel
