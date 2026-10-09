@@ -39,11 +39,10 @@ export const OrderConfirmation = () => {
 			<div>
 				<header>
 					<p className="mb-2 text-lg font-bold" data-testid="orderConfrmationTitle">
-						Order #{order.number} confirmed
+						訂單 #{order.number} 已成立
 					</p>
 					<p className="text-base">
-						Thank you for placing your order. We&apos;ve received it and we will contact you as soon as your
-						package is shipped. A confirmation email has been sent to {order.userEmail}.
+						感謝您的訂購！訂單確認信已寄到 {order.userEmail}，商品出貨時我們會再通知您。
 					</p>
 				</header>
 				<OrderInfo />
