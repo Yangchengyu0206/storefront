@@ -42,7 +42,9 @@ export async function generateMetadata(
 	}
 
 	const productName = product.seoTitle || product.name;
-	const variantName = product.variants?.find(({ id }) => id === searchParams.variant)?.name;
+	const variantName = displayVariantName(
+		product.variants?.find(({ id }) => id === searchParams.variant)?.name,
+	);
 	const productNameAndVariant = variantName ? `${productName} - ${variantName}` : productName;
 
 	return {
@@ -166,19 +168,26 @@ export default async function Page(props: {
 		price: trackedPrice?.amount ?? null,
 	};
 
+	// 預設變體的 name 是 global ID，不能出現在 JSON-LD。
+	const selectedVariantLabel = displayVariantName(selectedVariant?.name);
+
 	const productJsonLd: WithContext<Product> = {
 		"@context": "https://schema.org",
 		"@type": "Product",
 		image: product.thumbnail?.url,
 		...(selectedVariant
 			? {
-					name: `${product.name} - ${selectedVariant.name}`,
-					description: product.seoDescription || `${product.name} - ${selectedVariant.name}`,
+					name: selectedVariantLabel ? `${product.name} - ${selectedVariantLabel}` : product.name,
+					description:
+						product.seoDescription ||
+						(selectedVariantLabel ? `${product.name} - ${selectedVariantLabel}` : product.name),
 					offers: {
 						"@type": "Offer",
-						availability: selectedVariant.quantityAvailable
-							? "https://schema.org/InStock"
-							: "https://schema.org/OutOfStock",
+						availability: isPreorder
+							? "https://schema.org/PreOrder"
+							: selectedVariant.quantityAvailable
+								? "https://schema.org/InStock"
+								: "https://schema.org/OutOfStock",
 						priceCurrency: selectedVariant.pricing?.price?.gross.currency,
 						price: selectedVariant.pricing?.price?.gross.amount,
 					},
@@ -189,9 +198,12 @@ export default async function Page(props: {
 					description: product.seoDescription || product.name,
 					offers: {
 						"@type": "AggregateOffer",
-						availability: product.variants?.some((variant) => variant.quantityAvailable)
-							? "https://schema.org/InStock"
-							: "https://schema.org/OutOfStock",
+						// 預購（代購先賣後買）一律可訂，標 PreOrder 而不是 OutOfStock。
+						availability: isPreorder
+							? "https://schema.org/PreOrder"
+							: inStock
+								? "https://schema.org/InStock"
+								: "https://schema.org/OutOfStock",
 						priceCurrency: product.pricing?.priceRange?.start?.gross.currency,
 						lowPrice: product.pricing?.priceRange?.start?.gross.amount,
 						highPrice: product.pricing?.priceRange?.stop?.gross.amount,
