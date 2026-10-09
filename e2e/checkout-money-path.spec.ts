@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 /**
  * 金錢路徑 E2E（真後端，無 mock）：
@@ -101,6 +101,48 @@ async function revealPayButton(page: Page) {
 	return payButton;
 }
 
+const enabledPayButton = (page: Page) => page.getByRole("button", { name: "前往綠界付款", disabled: false });
+
+/** 攔下 transactionInitialize（回 GraphQL error，不會建立交易），回傳讀取送出 amount 的函式 */
+async function interceptTransactionInitialize(page: Page) {
+	let amount: number | undefined;
+	await page.route(/\/graphql\/?$/, async (route) => {
+		const body = route.request().postDataJSON() as { query?: string; variables?: { amount?: number } } | null;
+		if (body?.query?.includes("transactionInitialize(")) {
+			amount = body.variables?.amount;
+			await route.fulfill({
+				contentType: "application/json",
+				body: JSON.stringify({ errors: [{ message: "e2e: transactionInitialize intercepted" }] }),
+			});
+			return;
+		}
+		await route.continue();
+	});
+	return () => amount;
+}
+
+/** 等摘要的總額穩定為「小計＋運費」（新 checkout 沒有折扣）後回傳 */
+async function readSettledSummary(page: Page) {
+	const parseMoney = async (locator: Locator) =>
+		Number(((await locator.textContent()) ?? "").replace(/[^\d.]/g, ""));
+	const read = async () => ({
+		shipping: await parseMoney(page.getByLabel("shipping cost", { exact: true })),
+		subtotal: await parseMoney(page.getByLabel("subtotal price", { exact: true })),
+		// 注意：商品列也有 aria-label="total price"，訂單總額要用 testid
+		total: await parseMoney(page.getByTestId("totalOrderPrice")),
+	});
+	await expect
+		.poll(
+			async () => {
+				const { shipping, subtotal, total } = await read();
+				return shipping > 0 && Math.abs(total - (subtotal + shipping)) < 0.001;
+			},
+			{ timeout: 30_000 },
+		)
+		.toBe(true);
+	return read();
+}
+
 test.describe("金錢路徑", () => {
 	test("結帳流程：加購 → 地址 → 運送 → 發票統編 → 付款按鈕出現", async ({ page }) => {
 		await addFirstProductToCart(page);
@@ -108,6 +150,59 @@ test.describe("金錢路徑", () => {
 		await pickDeliveryAndInvoice(page);
 		const payButton = await revealPayButton(page);
 		await expect(payButton).toBeEnabled();
+	});
+
+	// 2026-10-09 沙盒實測：運送方式還沒寫進 server 就按付款 → 綠界收 30（未含運費 60），訂單總額 90。
+	// 以下兩個測試都不真的付款：攔下 transactionInitialize，只檢查送出的 amount。
+
+	test("付款金額含運費：自動帶入的運送方式還在 debounce 時就搶按付款", async ({ page }) => {
+		// 原 bug 的路徑：最便宜的運送方式是前端自動帶入的，2 秒 debounce 內 server 端還沒有運送方式，
+		// 舊版付款按鈕這時已可按，送出的 amount 不含運費。
+		const getInitializeAmount = await interceptTransactionInitialize(page);
+		await addFirstProductToCart(page);
+		await fillContactAndAddress(page);
+		await page.getByTestId("consentCheckbox").check();
+
+		await enabledPayButton(page).click({ timeout: 30_000 });
+		await expect.poll(getInitializeAmount, { timeout: 20_000 }).toBeDefined();
+
+		const { shipping, total } = await readSettledSummary(page);
+		expect(shipping).toBeGreaterThan(0);
+		expect(getInitializeAmount()).toBe(total);
+	});
+
+	test("付款金額含運費：切換運送方式更新中按鈕不可按", async ({ page }) => {
+		const getInitializeAmount = await interceptTransactionInitialize(page);
+		await addFirstProductToCart(page);
+		await fillContactAndAddress(page);
+		await page.getByTestId("consentCheckbox").check();
+
+		const delivery = page.getByTestId("deliveryMethods");
+		const methods = delivery.locator('input[name="selectedMethodId"]');
+		await expect(methods.first()).toBeAttached({ timeout: 30_000 });
+		// 挑一個「目前沒被選」的方式，保證會觸發 onChange → 更新中
+		const count = await methods.count();
+		let target = methods.first();
+		for (let i = 0; i < count; i++) {
+			if (!(await methods.nth(i).isChecked())) {
+				target = methods.nth(i);
+				break;
+			}
+		}
+		await target.check({ force: true });
+
+		// 更新還在路上（含 2 秒 debounce）：不能有可按的付款按鈕
+		await expect(enabledPayButton(page)).toHaveCount(0);
+		await page.waitForTimeout(1_000);
+		await expect(enabledPayButton(page)).toHaveCount(0);
+
+		await expect(enabledPayButton(page)).toBeVisible({ timeout: 30_000 });
+		const { shipping, total } = await readSettledSummary(page);
+		expect(shipping).toBeGreaterThan(0);
+
+		await enabledPayButton(page).click();
+		await expect.poll(getInitializeAmount, { timeout: 20_000 }).toBeDefined();
+		expect(getInitializeAmount()).toBe(total);
 	});
 
 	test("跳轉 ECPay 沙盒付款頁（需 cloudflared tunnel）", async ({ page }) => {

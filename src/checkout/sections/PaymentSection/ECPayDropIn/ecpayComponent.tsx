@@ -1,15 +1,38 @@
 "use client";
 
 import { useState } from "react";
+import { useClient } from "urql";
 import { getUrlForTransactionInitialize } from "../utils";
 import { ecpayGatewayId } from "./types";
 import { Button } from "@/checkout/components";
-import { useTransactionInitializeMutation } from "@/checkout/graphql";
+import {
+	CheckoutDocument,
+	type CheckoutQuery,
+	type CheckoutQueryVariables,
+	useTransactionInitializeMutation,
+} from "@/checkout/graphql";
 import { useAlerts } from "@/checkout/hooks/useAlerts";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { useCheckoutComplete } from "@/checkout/hooks/useCheckoutComplete";
 import { flushPendingMetadata } from "@/checkout/lib/pendingMetadata";
+import { getFormattedMoney } from "@/checkout/lib/utils/money";
+import { extractCheckoutIdFromUrl } from "@/checkout/lib/utils/url";
+import { type CheckoutUpdateStateScope, useCheckoutUpdateState } from "@/checkout/state/updateStateStore";
 import { API_BASE_URL } from "@/lib/env";
+
+/**
+ * 會改變 checkout 總額的更新。任一個還在路上，畫面上的總額就可能還沒含運費／折扣，
+ * 這時候不准付款（2026-10-09 沙盒實測：選完超商取貨 1.5 秒就按付款，綠界收 30、
+ * 訂單總額 90）。只列跟金額有關的 scope——email、登入那些若卡在 loading 不該連帶鎖死付款。
+ */
+const TOTAL_AFFECTING_SCOPES: CheckoutUpdateStateScope[] = [
+	"checkoutShippingUpdate",
+	"checkoutBillingUpdate",
+	"checkoutDeliveryMethodUpdate",
+	"checkoutLinesUpdate",
+	"checkoutLinesDelete",
+	"checkoutAddPromoCode",
+];
 
 /**
  * 綠界金流支付組件
@@ -38,13 +61,22 @@ interface ECPayComponentProps {
 export const ECPayComponent = ({ config }: ECPayComponentProps = {}) => {
 	const { showCustomErrors } = useAlerts();
 	const { checkout } = useCheckout();
+	const urqlClient = useClient();
+	const { updateState, loadingCheckout } = useCheckoutUpdateState();
 	const [transactionInitializeState, transactionInitialize] = useTransactionInitializeMutation();
 	const { onCheckoutComplete, completingCheckout } = useCheckoutComplete();
 	const [isProcessing, setIsProcessing] = useState(false);
 
 	const isInProgress = completingCheckout || transactionInitializeState.fetching || isProcessing;
+	// checkout 正在重抓（mutation 成功後 urql 會把 query 標 stale 再重抓）或有改金額的更新沒回來
+	const isUpdatingTotal =
+		loadingCheckout || TOTAL_AFFECTING_SCOPES.some((scope) => updateState[scope] === "loading");
+	// 運送方式在 server 端還沒設定 = 總額還不含運費（Saleor transactionInitialize 本身不檢查這個）
+	const isMissingDeliveryMethod = checkout.isShippingRequired && !checkout.deliveryMethod;
 
 	const handlePaymentClick = async () => {
+		// 客人按下去當下看到的總額；下面跟 server 最新值比對用
+		const displayedTotal = checkout.totalPrice.gross.amount;
 		try {
 			setIsProcessing(true);
 
@@ -52,6 +84,40 @@ export const ECPayComponent = ({ config }: ECPayComponentProps = {}) => {
 			// order，api-core 之後只讀得到 order 那份）。發票選項是 600ms debounce 寫回的，
 			// 除外同意是勾選當下 fire-and-forget——兩者都可能還在路上。先等它們寫完。
 			await flushPendingMetadata();
+
+			// 付款金額一律以 Saleor 當下的 checkout 為準，不信前端快取。
+			// 用跟 useCheckout 相同的 variables 打 network-only，結果也會回寫到畫面上的摘要。
+			const fresh = await urqlClient
+				.query<CheckoutQuery, CheckoutQueryVariables>(
+					CheckoutDocument,
+					{ id: extractCheckoutIdFromUrl(), languageCode: "EN_US" },
+					{ requestPolicy: "network-only" },
+				)
+				.toPromise();
+			const freshCheckout = fresh.data?.checkout;
+			if (fresh.error || !freshCheckout) {
+				showCustomErrors([{ message: "無法確認訂單金額，請稍後再試" }]);
+				setIsProcessing(false);
+				return;
+			}
+			if (freshCheckout.isShippingRequired && !freshCheckout.deliveryMethod) {
+				showCustomErrors([{ message: "請先選擇運送方式" }]);
+				setIsProcessing(false);
+				return;
+			}
+			const amount = freshCheckout.totalPrice.gross.amount;
+			if (amount !== displayedTotal) {
+				// 畫面已被上面的查詢更新成新總額；讓客人看清楚再按一次，不要默默收不同的錢
+				showCustomErrors([
+					{
+						message: `訂單金額已更新為 ${getFormattedMoney(
+							freshCheckout.totalPrice.gross,
+						)}，請確認後再按一次付款`,
+					},
+				]);
+				setIsProcessing(false);
+				return;
+			}
 
 			// 準備返回 URL（當用戶從綠界返回時使用）
 			const { newUrl: returnUrl } = getUrlForTransactionInitialize();
@@ -65,10 +131,11 @@ export const ECPayComponent = ({ config }: ECPayComponentProps = {}) => {
 				console.log("使用 Gateway ID:", activeGatewayId, "來源:", config?.id ? "config" : "預設");
 			}
 
-			// 初始化交易
+			// 初始化交易。amount 刻意明確帶（不省略）：省略時 Saleor 會用「總額 − 既有交易的
+			// charged/pending」，客人之前放棄的綠界付款頁留下的 charge_pending 會被扣掉，反而少收。
 			const response = await transactionInitialize({
 				checkoutId: checkout.id,
-				amount: checkout.totalPrice.gross.amount,
+				amount,
 				paymentGateway: {
 					// 【關鍵修改】使用動態 ID
 					id: activeGatewayId,
@@ -192,6 +259,14 @@ export const ECPayComponent = ({ config }: ECPayComponentProps = {}) => {
 
 	if (isInProgress) {
 		return <Button variant="primary" disabled={true} label="處理中..." />;
+	}
+
+	if (isUpdatingTotal) {
+		return <Button variant="primary" disabled={true} label="更新金額中…" />;
+	}
+
+	if (isMissingDeliveryMethod) {
+		return <Button variant="primary" disabled={true} label="請先選擇運送方式" />;
 	}
 
 	return <Button variant="primary" onClick={handlePaymentClick} label="前往綠界付款" />;

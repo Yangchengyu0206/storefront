@@ -47,6 +47,10 @@ export const useDeliveryMethodsForm = (): UseFormReturn<DeliveryMethodsFormData>
 				onSubmit: updateDeliveryMethod,
 				shouldAbort: ({ formData: { selectedMethodId } }) =>
 					!selectedMethodId || selectedMethodId === checkout.deliveryMethod?.id,
+				// onChange 會先把狀態設成 loading；客人在 debounce 內又切回 server 上已設定的那個方式時
+				// 會走 abort。useSubmit 只有在 onAbort 存在時才把狀態收回 success，不給的話會永遠卡在
+				// loading，付款區（PaymentMethods／ECPay 按鈕）就一直不出現。
+				onAbort: () => {},
 				parse: ({ selectedMethodId, languageCode, checkoutId }) => ({
 					deliveryMethodId: selectedMethodId as string,
 					languageCode,
