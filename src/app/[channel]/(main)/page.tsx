@@ -1,5 +1,7 @@
 import { ProductListByCollectionDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
+import { getStorefrontContent } from "@/lib/storefront-content";
+import { HomeBanners } from "@/ui/components/HomeBanners";
 import { ProductList } from "@/ui/components/ProductList";
 
 const storeName = process.env.NEXT_PUBLIC_SELLER_NAME || "商店";
@@ -11,19 +13,24 @@ export const metadata = {
 
 export default async function Page(props: { params: Promise<{ channel: string }> }) {
 	const params = await props.params;
-	const data = await executeGraphQL(ProductListByCollectionDocument, {
-		variables: {
-			slug: "featured-products",
-			channel: params.channel,
-		},
-		revalidate: 60,
-		withAuth: false, // 公開目錄查詢不帶 cookie 認證，讓 fetch 快取生效
-	});
+	const [data, content] = await Promise.all([
+		executeGraphQL(ProductListByCollectionDocument, {
+			variables: {
+				slug: "featured-products",
+				channel: params.channel,
+			},
+			revalidate: 60,
+			withAuth: false, // 公開目錄查詢不帶 cookie 認證，讓 fetch 快取生效
+		}),
+		// 首頁 Banner（後台「商店設定 → 前台公告與版位」）；取不到就是空陣列
+		getStorefrontContent(),
+	]);
 
 	const products = data.collection?.products?.edges.map(({ node: product }) => product) ?? [];
 
 	return (
 		<section className="mx-auto max-w-7xl p-8 pb-16">
+			<HomeBanners banners={content.banners} />
 			<h2 className="sr-only">商品列表</h2>
 			{products.length > 0 ? (
 				<ProductList products={products} />
