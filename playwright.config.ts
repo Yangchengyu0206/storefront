@@ -6,7 +6,7 @@ import { defineConfig, devices } from "@playwright/test";
  * Prerequisites (all must be running):
  *   - saleor-platform (Saleor GraphQL on :8000)
  *   - full-stack api-core (:8002) reachable from Saleor for ECPay payment
- *     (production tunnel: cloudflared `ops-tunnel` → core.yangtech.org)
+ *     (production tunnel: cloudflared `ops-tunnel-dev` → core.yangtech.dev)
  *   - full-stack .env has ECPay SANDBOX credentials + ENVIRONMENT=local
  *
  * Run: pnpm test:e2e

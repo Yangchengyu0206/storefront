@@ -7,7 +7,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
  * 分兩段：
  *  1. 「結帳流程到付款按鈕」— 只依賴本機 stack（Saleor + storefront），必須全綠。
  *  2. 「跳轉 ECPay 沙盒頁」— 需要 Saleor 能呼叫 ECPay payment app（api-core），
- *     亦即 cloudflared tunnel（core.yangtech.org）在跑。預設跳過；
+ *     亦即 cloudflared tunnel（core.yangtech.dev）在跑。預設跳過；
  *     用 `E2E_ECPAY=1 pnpm test:e2e` 開啟。到達 ECPay 付款頁即通過，不真的刷卡。
  */
 
@@ -208,7 +208,7 @@ test.describe("金錢路徑", () => {
 	test("跳轉 ECPay 沙盒付款頁（需 cloudflared tunnel）", async ({ page }) => {
 		test.skip(
 			process.env.E2E_ECPAY !== "1",
-			"需要 cloudflared tunnel（core.yangtech.org）讓 Saleor 呼叫 api-core；開啟方式：E2E_ECPAY=1",
+			"需要 cloudflared tunnel（core.yangtech.dev）讓 Saleor 呼叫 api-core；開啟方式：E2E_ECPAY=1",
 		);
 		await addFirstProductToCart(page);
 		await fillContactAndAddress(page);
