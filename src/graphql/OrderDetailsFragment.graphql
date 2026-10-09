@@ -27,6 +27,10 @@ fragment OrderDetails on Order {
 					id
 					name
 				}
+				metadata {
+					key
+					value
+				}
 			}
 			pricing {
 				price {

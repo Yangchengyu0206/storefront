@@ -1,7 +1,5 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { CurrentUserOrderListDocument } from "@/gql/graphql";
-import { executeGraphQL } from "@/lib/graphql";
 import { formatDate, formatMoney, getHrefForVariant } from "@/lib/utils";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 import { LoginForm } from "@/ui/components/LoginForm";
@@ -9,6 +7,10 @@ import { PaymentStatus } from "@/ui/components/PaymentStatus";
 import { OrderLineProgress } from "@/ui/components/OrderLineProgress";
 import { type GuestOrderLine, lookupGuestOrder } from "@/lib/guest-order-lookup";
 import { displayVariantName } from "@/lib/variant-name";
+import { isCoolingOffExcluded } from "@/lib/cooling-off";
+import { findMyOrder } from "@/lib/my-order";
+import { type SelfServiceStatus, getSelfServiceStatus } from "@/lib/order-self-service";
+import { OrderSelfService } from "@/ui/components/OrderSelfService";
 
 // B4-13：消費者自助訂單明細頁。重用 CurrentUserOrderList 查詢與 OrderDetails fragment。
 // 2026-07-12：fragment 已擴充 status / fulfillments（trackingNumber）/ shippingAddress，
@@ -17,38 +19,9 @@ export default async function OrderDetailPage(props: { params: Promise<{ id: str
 	const params = await props.params;
 	const orderId = decodeURIComponent(params.id);
 
-	// 這頁只能靠 `me.orders` 找訂單：Saleor 的 `Query.order(id:)` 需要 MANAGE_ORDERS
-	// （3.22.16 schema.py:191），storefront 不該持有那個權限。
-	//
-	// 原本抓固定的前 10 筆再用 find 比對 id——也就是說**第 11 張以後的訂單，
-	// 明細頁一律 404**，而客人是從自己的訂單列表點進來的，看起來就像訂單消失了。
-	// 改成逐頁往後找；上限 10 頁（1000 張）純粹是防呆，避免資料異常時無限迴圈。
-	const PAGE_SIZE = 100;
-	const MAX_PAGES = 10;
-
-	const fetchOrderPage = (after: string | null) =>
-		executeGraphQL(CurrentUserOrderListDocument, {
-			variables: { first: PAGE_SIZE, after },
-			cache: "no-cache",
-		});
-	type OrderListResult = Awaited<ReturnType<typeof fetchOrderPage>>;
-
-	let user: OrderListResult["me"] = null;
-	let order: NonNullable<NonNullable<OrderListResult["me"]>["orders"]>["edges"][number]["node"] | undefined;
-	let after: string | null = null;
-
-	for (let page = 0; page < MAX_PAGES; page++) {
-		const result = await fetchOrderPage(after);
-		user = result.me;
-		if (!user) break;
-
-		order = (user.orders?.edges || []).map((edge) => edge.node).find((node) => node.id === orderId);
-		if (order) break;
-
-		const pageInfo = user.orders?.pageInfo;
-		if (!pageInfo?.hasNextPage) break;
-		after = pageInfo.endCursor ?? null;
-	}
+	// 只能靠 `me.orders` 找訂單（Saleor `Query.order(id:)` 需要 MANAGE_ORDERS）；
+	// 逐頁找的邏輯與自助取消／退換貨的 server action 共用 `lib/my-order.ts`。
+	const { user, order } = await findMyOrder(orderId);
 
 	if (!user) {
 		return <LoginForm channel={params.channel} />;
@@ -74,6 +47,18 @@ export default async function OrderDetailPage(props: { params: Promise<{ id: str
 		}
 	}
 	const hasProgress = [...progressByLine.values()].some((l) => l.progress);
+
+	// 自助取消／退換貨：能不能做由 api-core 判定，同樣只用 server 端 `me.email`。
+	// api-core 掛掉時整塊不顯示，頁尾仍有「聯絡客服」。
+	let selfService: SelfServiceStatus | null = null;
+	if (user.email) {
+		try {
+			selfService = await getSelfServiceStatus(String(order.number), user.email);
+		} catch (e) {
+			console.warn("[orders/[id]] 讀取自助服務狀態失敗，隱藏取消／退換貨區塊", e);
+		}
+	}
+	const rmaLineById = new Map((selfService?.rmaLines ?? []).map((l) => [l.saleorLineId, l]));
 
 	return (
 		<div className="mx-auto max-w-5xl p-8">
@@ -228,6 +213,30 @@ export default async function OrderDetailPage(props: { params: Promise<{ id: str
 					</p>
 				)}
 			</div>
+
+			{selfService && (
+				<OrderSelfService
+					channel={params.channel}
+					orderId={order.id}
+					orderNumber={String(order.number)}
+					cancelMode={selfService.cancel.mode}
+					cancelRequestedAt={selfService.cancel.requestedAt}
+					rmaRequests={selfService.rmaRequests}
+					lines={order.lines.map((line) => {
+						const rma = rmaLineById.get(line.id);
+						const label = displayVariantName(line.variant?.name ?? null);
+						return {
+							saleorLineId: line.id,
+							name: line.variant?.product.name ?? "商品",
+							variantLabel: label && label !== line.variant?.id ? label : null,
+							quantityFulfilled: rma?.quantityFulfilled ?? line.quantityFulfilled,
+							eligible: rma?.eligible ?? false,
+							hasOpenRequest: rma?.hasOpenRequest ?? false,
+							coolingOffExcluded: isCoolingOffExcluded(line.variant?.product.metadata),
+						};
+					})}
+				/>
+			)}
 
 			<p className="mt-6 text-xs text-ink-400">如需協助，請聯絡客服並提供訂單編號 #{order.number}。</p>
 		</div>
