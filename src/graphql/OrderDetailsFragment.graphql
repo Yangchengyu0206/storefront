@@ -9,6 +9,8 @@ fragment OrderDetails on Order {
 		}
 	}
 	lines {
+		id
+		quantityFulfilled
 		variant {
 			id
 			name

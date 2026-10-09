@@ -6,6 +6,9 @@ import { formatDate, formatMoney, getHrefForVariant } from "@/lib/utils";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 import { LoginForm } from "@/ui/components/LoginForm";
 import { PaymentStatus } from "@/ui/components/PaymentStatus";
+import { OrderLineProgress } from "@/ui/components/OrderLineProgress";
+import { type GuestOrderLine, lookupGuestOrder } from "@/lib/guest-order-lookup";
+import { displayVariantName } from "@/lib/variant-name";
 
 // B4-13：消費者自助訂單明細頁。重用 CurrentUserOrderList 查詢與 OrderDetails fragment。
 // 2026-07-12：fragment 已擴充 status / fulfillments（trackingNumber）/ shippingAddress，
@@ -55,6 +58,23 @@ export default async function OrderDetailPage(props: { params: Promise<{ id: str
 		notFound();
 	}
 
+	// 每一行的代購採購進度：Saleor 沒有這份資料，向 api-core 的訪客查單端點拿
+	// （它讀 backend 的採購表，只回客人安全欄位）。email 一律用 server 端 `me` 的值，
+	// 絕不吃 client 輸入。api-core 掛掉／沒設定／查不到（例如客人改過帳號 email）時
+	// 不影響頁面，只是不顯示進度。
+	const progressByLine = new Map<string, GuestOrderLine>();
+	if (user.email) {
+		try {
+			const lookup = await lookupGuestOrder(String(order.number), user.email);
+			for (const line of lookup?.lines ?? []) {
+				if (line.saleorLineId) progressByLine.set(line.saleorLineId, line);
+			}
+		} catch (e) {
+			console.warn("[orders/[id]] 讀取採購進度失敗，降級為不顯示進度", e);
+		}
+	}
+	const hasProgress = [...progressByLine.values()].some((l) => l.progress);
+
 	return (
 		<div className="mx-auto max-w-5xl p-8">
 			<LinkWithChannel href="/orders" className="text-sm text-ink-500 hover:text-ink-700">
@@ -102,8 +122,10 @@ export default async function OrderDetailPage(props: { params: Promise<{ id: str
 								return null;
 							}
 							const product = item.variant.product;
+							const variantLabel = displayVariantName(item.variant.name);
+							const progressLine = progressByLine.get(item.id);
 							return (
-								<tr key={item.variant.id || idx}>
+								<tr key={item.id || idx}>
 									<td className="py-6 pl-6 pr-6 md:w-[60%]">
 										<div className="flex flex-row items-center">
 											{product.thumbnail && (
@@ -127,9 +149,14 @@ export default async function OrderDetailPage(props: { params: Promise<{ id: str
 												>
 													{product.name}
 												</LinkWithChannel>
-												{item.variant.name !== item.variant.id && Boolean(item.variant.name) && (
-													<p className="mt-1">規格：{item.variant.name}</p>
+												{variantLabel && variantLabel !== item.variant.id && (
+													<p className="mt-1">規格：{variantLabel}</p>
 												)}
+												<OrderLineProgress
+													progress={progressLine?.progress}
+													quantity={item.quantity}
+													quantityFulfilled={item.quantityFulfilled}
+												/>
 											</div>
 										</div>
 									</td>
@@ -195,7 +222,9 @@ export default async function OrderDetailPage(props: { params: Promise<{ id: str
 					</ul>
 				) : (
 					<p className="mt-3 text-sm text-ink-400">
-						尚未出貨。預購商品備貨中，到貨後會依訂單順序出貨並通知你。
+						{hasProgress
+							? "尚未出貨。各品項的採購與到貨進度請見上方明細，到齊後會依訂單順序出貨並通知你。"
+							: "尚未出貨。到貨後會依訂單順序出貨並通知你。"}
 					</p>
 				)}
 			</div>
