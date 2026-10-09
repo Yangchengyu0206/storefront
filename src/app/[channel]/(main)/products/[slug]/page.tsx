@@ -13,9 +13,11 @@ import { formatMoney, formatMoneyRange } from "@/lib/utils";
 import { CheckoutAddLineDocument, ProductDetailsDocument, ProductListDocument } from "@/gql/graphql";
 import * as Checkout from "@/lib/checkout";
 import { AvailabilityMessage } from "@/ui/components/AvailabilityMessage";
+import { TrackViewItem } from "@/ui/components/TrackEvent";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import { isCoolingOffExcluded } from "@/lib/cooling-off";
+import { displayVariantName } from "@/lib/variant-name";
 
 export async function generateMetadata(
 	props: {
@@ -40,7 +42,9 @@ export async function generateMetadata(
 	}
 
 	const productName = product.seoTitle || product.name;
-	const variantName = product.variants?.find(({ id }) => id === searchParams.variant)?.name;
+	const variantName = displayVariantName(
+		product.variants?.find(({ id }) => id === searchParams.variant)?.name,
+	);
 	const productNameAndVariant = variantName ? `${productName} - ${variantName}` : productName;
 
 	return {
@@ -155,19 +159,35 @@ export default async function Page(props: {
 				})
 			: "";
 
+	// 行銷追蹤（GA4 view_item / Meta ViewContent）用的商品資料；追蹤未啟用時元件不做事。
+	const trackedPrice = selectedVariant?.pricing?.price?.gross ?? product.pricing?.priceRange?.start?.gross;
+	const trackedItem = {
+		id: selectedVariant?.id ?? product.id,
+		name: product.name,
+		variant: displayVariantName(selectedVariant?.name),
+		price: trackedPrice?.amount ?? null,
+	};
+
+	// 預設變體的 name 是 global ID，不能出現在 JSON-LD。
+	const selectedVariantLabel = displayVariantName(selectedVariant?.name);
+
 	const productJsonLd: WithContext<Product> = {
 		"@context": "https://schema.org",
 		"@type": "Product",
 		image: product.thumbnail?.url,
 		...(selectedVariant
 			? {
-					name: `${product.name} - ${selectedVariant.name}`,
-					description: product.seoDescription || `${product.name} - ${selectedVariant.name}`,
+					name: selectedVariantLabel ? `${product.name} - ${selectedVariantLabel}` : product.name,
+					description:
+						product.seoDescription ||
+						(selectedVariantLabel ? `${product.name} - ${selectedVariantLabel}` : product.name),
 					offers: {
 						"@type": "Offer",
-						availability: selectedVariant.quantityAvailable
-							? "https://schema.org/InStock"
-							: "https://schema.org/OutOfStock",
+						availability: isPreorder
+							? "https://schema.org/PreOrder"
+							: selectedVariant.quantityAvailable
+								? "https://schema.org/InStock"
+								: "https://schema.org/OutOfStock",
 						priceCurrency: selectedVariant.pricing?.price?.gross.currency,
 						price: selectedVariant.pricing?.price?.gross.amount,
 					},
@@ -178,9 +198,12 @@ export default async function Page(props: {
 					description: product.seoDescription || product.name,
 					offers: {
 						"@type": "AggregateOffer",
-						availability: product.variants?.some((variant) => variant.quantityAvailable)
-							? "https://schema.org/InStock"
-							: "https://schema.org/OutOfStock",
+						// 預購（代購先賣後買）一律可訂，標 PreOrder 而不是 OutOfStock。
+						availability: isPreorder
+							? "https://schema.org/PreOrder"
+							: inStock
+								? "https://schema.org/InStock"
+								: "https://schema.org/OutOfStock",
 						priceCurrency: product.pricing?.priceRange?.start?.gross.currency,
 						lowPrice: product.pricing?.priceRange?.start?.gross.amount,
 						highPrice: product.pricing?.priceRange?.stop?.gross.amount,
@@ -196,6 +219,7 @@ export default async function Page(props: {
 					__html: JSON.stringify(productJsonLd),
 				}}
 			/>
+			<TrackViewItem item={trackedItem} currency={trackedPrice?.currency} />
 			<form className="grid gap-2 sm:grid-cols-2 lg:grid-cols-8" action={addItem}>
 				<div className="md:col-span-1 lg:col-span-5">
 					{firstImage && (
@@ -246,7 +270,11 @@ export default async function Page(props: {
 							</div>
 						)}
 						<div className="mt-8">
-							<AddButton disabled={!selectedVariantID || !canOrder} />
+							<AddButton
+								disabled={!selectedVariantID || !canOrder}
+								trackItem={selectedVariant ? trackedItem : undefined}
+								trackCurrency={trackedPrice?.currency}
+							/>
 						</div>
 						{description && (
 							<div className="mt-8 space-y-6 text-sm text-ink-500">

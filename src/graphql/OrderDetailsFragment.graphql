@@ -9,6 +9,8 @@ fragment OrderDetails on Order {
 		}
 	}
 	lines {
+		id
+		quantityFulfilled
 		variant {
 			id
 			name
@@ -24,6 +26,10 @@ fragment OrderDetails on Order {
 				category {
 					id
 					name
+				}
+				metadata {
+					key
+					value
 				}
 			}
 			pricing {

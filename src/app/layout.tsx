@@ -3,6 +3,7 @@ import "./globals.css";
 import { Suspense, type ReactNode } from "react";
 import { type Metadata } from "next";
 import { DraftModeNotification } from "@/ui/components/DraftModeNotification";
+import { Analytics } from "@/ui/components/Analytics";
 import { STOREFRONT_URL } from "@/lib/env";
 
 // Latin faces. Inter was the previous default and is the single most common
@@ -29,6 +30,10 @@ export default function RootLayout(props: { children: ReactNode }) {
 				{children}
 				<Suspense>
 					<DraftModeNotification />
+				</Suspense>
+				{/* GA4 / Meta Pixel：env 未設定時不渲染。useSearchParams 需要 Suspense 邊界。 */}
+				<Suspense>
+					<Analytics />
 				</Suspense>
 			</body>
 		</html>

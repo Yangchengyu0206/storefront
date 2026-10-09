@@ -4,6 +4,8 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { initialLookupState, lookupOrderAction } from "./actions";
 import type { GuestOrderResult } from "@/lib/guest-order-lookup";
+import { shipmentStatusLabel } from "@/lib/order-progress";
+import { OrderLineProgress } from "@/ui/components/OrderLineProgress";
 
 const STATUS_LABEL: Record<string, string> = {
 	UNCONFIRMED: "待確認",
@@ -44,6 +46,7 @@ function SubmitButton() {
 function OrderResult({ order }: { order: GuestOrderResult }) {
 	const fmt = (n: number, c: string) =>
 		new Intl.NumberFormat("zh-TW", { style: "currency", currency: c }).format(n);
+	const shipment = shipmentStatusLabel(order.shipmentStatus);
 
 	return (
 		<div className="mt-8 rounded border border-ink-200 bg-white p-6">
@@ -69,6 +72,12 @@ function OrderResult({ order }: { order: GuestOrderResult }) {
 					<dt className="text-ink-500">訂單金額</dt>
 					<dd className="mt-1 font-medium text-ink-900">{fmt(order.totalAmount, order.currency)}</dd>
 				</div>
+				{shipment && (
+					<div>
+						<dt className="text-ink-500">出貨進度</dt>
+						<dd className="mt-1 font-medium text-ink-900">{shipment}</dd>
+					</div>
+				)}
 			</dl>
 
 			{order.trackingNumbers.length > 0 && (
@@ -80,11 +89,19 @@ function OrderResult({ order }: { order: GuestOrderResult }) {
 
 			<ul className="mt-6 divide-y divide-ink-100 border-t border-ink-100">
 				{order.lines.map((line, i) => (
-					<li key={`${line.productName}-${i}`} className="flex justify-between py-3 text-sm">
+					<li
+						key={line.saleorLineId ?? `${line.productName}-${i}`}
+						className="flex justify-between gap-4 py-3 text-sm"
+					>
 						<div>
 							<p className="font-medium text-ink-900">{line.productName}</p>
 							{line.variantName && <p className="text-ink-500">{line.variantName}</p>}
 							<p className="text-ink-500">數量 {line.quantity}</p>
+							<OrderLineProgress
+								progress={line.progress}
+								quantity={line.quantity}
+								quantityFulfilled={line.quantityFulfilled}
+							/>
 						</div>
 						{/* 幣別在訂單層，行項不重複帶（一張訂單不會混幣別） */}
 						<p className="whitespace-nowrap font-medium text-ink-900">

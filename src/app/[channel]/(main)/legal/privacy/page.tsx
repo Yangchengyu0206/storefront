@@ -67,6 +67,12 @@ export default function PrivacyPage() {
 				及類似技術以維持登入狀態、記錄購物車與分析網站使用情形。您可透過瀏覽器設定拒絕或刪除
 				Cookie，但部分功能（如結帳）可能因此無法正常運作。
 			</p>
+			<p>
+				本服務可能使用 Google Analytics（Google LLC）及 Meta Pixel（Meta Platforms, Inc.）等第三方分析與廣告
+				Cookie，蒐集瀏覽頁面、檢視商品、加入購物車及完成訂購等去識別化之使用紀錄，用於統計分析網站流量及評估廣告成效；上述資料由各該服務提供者依其隱私權政策處理，可能傳輸至境外（如美國）。您可透過瀏覽器設定封鎖第三方
+				Cookie、使用 Google 提供之「Google Analytics 停用瀏覽器外掛程式」，或於 Meta
+				帳戶之廣告偏好設定中拒絕，拒絕不影響您使用本服務購物。
+			</p>
 
 			<h2>五、資料安全</h2>
 			<p>

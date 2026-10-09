@@ -11,11 +11,19 @@ import "server-only";
  * 這支是 server-only：`API_CORE_INTERNAL_SECRET` 絕不可以進到瀏覽器。
  */
 
+import { type OrderLineProgressData, isCustomerDecision, isProgressStatus } from "@/lib/order-progress";
+import { displayVariantName } from "@/lib/variant-name";
+
 export interface GuestOrderLine {
+	/** Saleor OrderLine global ID——會員訂單頁靠它跟 Saleor 的 lines 對上。 */
+	saleorLineId: string | null;
 	productName: string;
 	variantName: string | null;
 	quantity: number;
+	quantityFulfilled: number;
 	totalAmount: number;
+	/** 代購採購進度；null＝不顯示（未付款／已取消，或 api-core 舊版沒回）。 */
+	progress: OrderLineProgressData | null;
 }
 
 export interface GuestOrderResult {
@@ -59,11 +67,36 @@ interface ApiCoreOrder {
 	currency: string;
 	tracking_numbers: string[];
 	lines: {
+		saleor_line_id?: string | null;
 		product_name: string;
 		variant_name: string | null;
 		quantity: number;
+		quantity_fulfilled?: number | null;
 		total_amount: number;
+		progress?: ApiCoreLineProgress | null;
 	}[];
+}
+
+/** api-core `services/order_progress.py` 的回傳形狀（欄位白名單由 api-core 決定）。 */
+interface ApiCoreLineProgress {
+	status: string;
+	purchase_quantity: number | null;
+	expected_arrival_date: string | null;
+	arrived_date: string | null;
+	customer_decision: string | null;
+	replacement_name: string | null;
+}
+
+function mapProgress(p: ApiCoreLineProgress | null | undefined): OrderLineProgressData | null {
+	if (!p || !isProgressStatus(p.status)) return null;
+	return {
+		status: p.status,
+		purchaseQuantity: p.purchase_quantity ?? null,
+		expectedArrivalDate: p.expected_arrival_date ?? null,
+		arrivedDate: p.arrived_date ?? null,
+		customerDecision: isCustomerDecision(p.customer_decision) ? p.customer_decision : null,
+		replacementName: p.replacement_name ?? null,
+	};
 }
 
 export async function lookupGuestOrder(orderNumber: string, email: string): Promise<GuestOrderResult | null> {
@@ -104,10 +137,14 @@ export async function lookupGuestOrder(orderNumber: string, email: string): Prom
 		currency: o.currency,
 		trackingNumbers: o.tracking_numbers ?? [],
 		lines: (o.lines ?? []).map((l) => ({
+			saleorLineId: l.saleor_line_id ?? null,
 			productName: l.product_name,
-			variantName: l.variant_name,
+			// 預設變體的 name 是 global ID，不給客人看
+			variantName: displayVariantName(l.variant_name),
 			quantity: l.quantity,
+			quantityFulfilled: l.quantity_fulfilled ?? 0,
 			totalAmount: l.total_amount,
+			progress: mapProgress(l.progress),
 		})),
 	};
 }
