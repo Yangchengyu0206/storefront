@@ -1,4 +1,5 @@
 import { type ReactNode } from "react";
+import { AnnouncementBar } from "@/ui/components/AnnouncementBar";
 import { Footer } from "@/ui/components/Footer";
 import { Header } from "@/ui/components/Header";
 
@@ -22,6 +23,8 @@ export default async function RootLayout(props: {
 			<a href="#main" className="skip-link">
 				跳到主要內容
 			</a>
+			{/* 後台「前台公告與版位」設定的公告列；沒設定時不佔任何空間 */}
+			<AnnouncementBar />
 			<Header channel={channel} />
 			<div className="flex min-h-[calc(100dvh-64px)] flex-col">
 				<main id="main" className="flex-1">

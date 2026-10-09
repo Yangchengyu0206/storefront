@@ -38,8 +38,9 @@ export async function getShippingInfo(): Promise<ShippingInfo | null> {
 	try {
 		const res = await fetch(`${apiBase.replace(/\/$/, "")}/api/v1/saleor/shop/shipping-info`, {
 			headers: { "X-Internal-Token": secret },
-			// 運費不常改，但改了要快點反映（後台存檔後最多 5 分鐘）
-			next: { revalidate: 300 },
+			// 同一個 URL 也供前台公告列／Banner 使用（lib/storefront-content.ts），
+			// 兩邊快取週期要一致，否則誰後寫誰決定：統一 60 秒
+			next: { revalidate: 60 },
 		});
 		if (!res.ok) return null;
 		const data = (await res.json()) as ApiCoreShippingInfo;
