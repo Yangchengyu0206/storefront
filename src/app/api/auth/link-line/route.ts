@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { AccountMeDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import { setLineBinding } from "@/lib/line-binding";
+import { safeChannel } from "@/lib/safe-channel";
 
 // 「我的帳戶 → 綁定 LINE」：已登入的客人走一次 LINE Login 之後導到這裡。
 //
@@ -13,8 +14,7 @@ import { setLineBinding } from "@/lib/line-binding";
 // 兩個身分都由伺服器端確認：Saleor 帳號看登入 cookie（me），LINE 身分看 Auth.js session
 // （剛完成的 OAuth）。不接受任何從網址或表單帶進來的 userId。
 export async function GET(req: NextRequest) {
-	const channel =
-		req.nextUrl.searchParams.get("channel") || process.env.NEXT_PUBLIC_DEFAULT_CHANNEL || "default-channel";
+	const channel = safeChannel(req.nextUrl.searchParams.get("channel"));
 	const back = (q: string) => NextResponse.redirect(new URL(`/${channel}/account?${q}`, req.url));
 
 	const { me } = await executeGraphQL(AccountMeDocument, { cache: "no-store" });

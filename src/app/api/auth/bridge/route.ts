@@ -1,13 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { safeChannel } from "@/lib/safe-channel";
 import { bridgeSocialLogin } from "@/lib/saleor-social-bridge";
 
 // Auth.js 完成 Google/LINE 登入後會導到這裡。
 // 這裡讀出已驗證的社群身分 → 換成 Saleor 登入(寫 cookie)→ 導回首頁。
 // 用 route handler(不是 page)才能在伺服器端寫 cookie。
 export async function GET(req: NextRequest) {
-	const channel =
-		req.nextUrl.searchParams.get("channel") || process.env.NEXT_PUBLIC_DEFAULT_CHANNEL || "default-channel";
+	const channel = safeChannel(req.nextUrl.searchParams.get("channel"));
 
 	const session = await auth();
 	const provider = (session as { provider?: string } | null)?.provider;
