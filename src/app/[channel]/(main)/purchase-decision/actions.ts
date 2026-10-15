@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { clientKeyFromHeaders } from "@/lib/client-ip";
 import {
 	checkDecisionRateLimit,
 	DecisionUnavailableError,
@@ -37,10 +38,7 @@ export async function submitDecisionAction(_prev: DecisionState, formData: FormD
 
 	// CF-Connecting-IP 優先，否則取 XFF 最右跳（最左側可偽造）——與訪客查單同一個判斷
 	const hdrs = await headers();
-	const clientKey =
-		hdrs.get("cf-connecting-ip")?.trim() ||
-		hdrs.get("x-forwarded-for")?.split(",").pop()?.trim() ||
-		"unknown";
+	const clientKey = clientKeyFromHeaders(hdrs);
 	if (!checkDecisionRateLimit(clientKey)) {
 		return { error: "操作次數過多，請稍後再試。", result: null };
 	}

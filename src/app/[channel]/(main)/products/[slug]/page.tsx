@@ -216,7 +216,8 @@ export default async function Page(props: {
 			<script
 				type="application/ld+json"
 				dangerouslySetInnerHTML={{
-					__html: JSON.stringify(productJsonLd),
+					// 商品名稱／SEO 描述含 </script> 會提早結束這個 script 元素（React 不跳脫 dangerouslySetInnerHTML）
+					__html: JSON.stringify(productJsonLd).replace(/</g, "\\u003c"),
 				}}
 			/>
 			<TrackViewItem item={trackedItem} currency={trackedPrice?.currency} />

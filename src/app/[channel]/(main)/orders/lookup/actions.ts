@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { clientKeyFromHeaders } from "@/lib/client-ip";
 import { checkLookupRateLimit, lookupGuestOrder, type GuestOrderResult } from "@/lib/guest-order-lookup";
 
 export interface LookupState {
@@ -26,10 +27,7 @@ export async function lookupOrderAction(_prev: LookupState, formData: FormData):
 	// 與 backend 的登入限流同一個判斷順序——CF-Connecting-IP 優先，否則取 XFF 最右跳
 	// （最左側是呼叫端自己送的，可以偽造）。
 	const hdrs = await headers();
-	const clientKey =
-		hdrs.get("cf-connecting-ip")?.trim() ||
-		hdrs.get("x-forwarded-for")?.split(",").pop()?.trim() ||
-		"unknown";
+	const clientKey = clientKeyFromHeaders(hdrs);
 	if (!checkLookupRateLimit(clientKey)) {
 		return { error: "查詢次數過多，請稍後再試。", order: null };
 	}

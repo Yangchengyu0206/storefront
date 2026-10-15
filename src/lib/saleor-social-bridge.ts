@@ -69,7 +69,7 @@ async function registerSaleorAccount(input: {
 // 見 auth.ts signIn 安全閘），channel 的註冊確認信可以維持開啟。
 // 啟用需要 MANAGE_USERS——storefront 不持有全權 token，由 api-core 代做
 // （api-core 那邊另有守門：只啟用剛建立、非員工的帳號）。
-async function activateNewAccount(email: string): Promise<boolean> {
+async function activateNewAccount(email: string, password: string): Promise<boolean> {
 	const base = process.env.API_CORE_URL || process.env.NEXT_PUBLIC_API_URL;
 	const secret = process.env.API_CORE_INTERNAL_SECRET;
 	if (!base || !secret) return false;
@@ -77,7 +77,9 @@ async function activateNewAccount(email: string): Promise<boolean> {
 		method: "POST",
 		headers: { "Content-Type": "application/json", "X-Internal-Token": secret },
 		cache: "no-store",
-		body: JSON.stringify({ email }),
+		// 帶上橋接設的密碼：api-core 用它向 Saleor 證明帳號是我們剛建的，不是別人用同一個
+		// email 預先註冊的（Saleor 3.22.16 的 accountRegister 不回 UNIQUE，下面的 alreadyExists 判斷擋不到）。
+		body: JSON.stringify({ email, password }),
 	});
 	if (!res.ok) return false;
 	return ((await res.json()) as { active?: boolean }).active === true;
@@ -155,7 +157,7 @@ export async function bridgeSocialLogin(params: {
 	if (payload.requiresConfirmation && !alreadyExists) {
 		// 只啟用「這次新建」的帳號。email 已存在時那是別人（或客人自己）先前用密碼註冊、
 		// 還沒驗證的帳號，密碼不是我們設的——啟用它等於把帳號交給當初註冊的人。
-		const activated = await activateNewAccount(email);
+		const activated = await activateNewAccount(email, password);
 		if (!activated) {
 			return { ok: false, error: "activation_failed" };
 		}

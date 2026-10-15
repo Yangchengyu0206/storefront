@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { clientKeyFromHeaders } from "@/lib/client-ip";
 import { CurrentUserDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import {
@@ -49,10 +50,7 @@ export async function submitWishAction(_prev: WishState, formData: FormData): Pr
 
 	// 與訪客查單同一個判斷順序：CF-Connecting-IP 優先，否則取 XFF 最右跳（最左可偽造）
 	const hdrs = await headers();
-	const clientKey =
-		hdrs.get("cf-connecting-ip")?.trim() ||
-		hdrs.get("x-forwarded-for")?.split(",").pop()?.trim() ||
-		"unknown";
+	const clientKey = clientKeyFromHeaders(hdrs);
 	if (!checkWishRateLimit(clientKey)) {
 		return fail("送出次數過多，請稍後再試，或直接用 Email／LINE 聯絡我們。");
 	}
