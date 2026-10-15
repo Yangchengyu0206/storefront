@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import { getServerAuthClient } from "@/app/config";
-import { STOREFRONT_URL } from "@/lib/env";
+import { confirmAccountUrl } from "@/lib/account-confirm";
 import { saleorUserIdFromToken, setLineBinding } from "@/lib/line-binding";
 
 // 把「已被 Auth.js 驗證過的社群身分」換成 Saleor 客戶登入。
@@ -11,8 +11,9 @@ import { saleorUserIdFromToken, setLineBinding } from "@/lib/line-binding";
 // 不需另外存密碼(只靠一個 server 端 SECRET),也不需資料庫。
 //
 // confirm-conflict 解法:accountRegister 一律設好衍生密碼;若 channel 開了 email 驗證
-// 導致帳號未啟用,改用 app token(MANAGE_USERS)直接啟用(社群 email 已由 OAuth 驗證,
+// 導致帳號未啟用,改用 app token(MANAGE_USERS)直接啟用(Google email 已由 OAuth 驗證,
 // 見 auth.ts signIn 安全閘)。channel 的 email 註冊確認信因此可維持開啟,兩者不衝突。
+// 例外:LINE 帶真實 email 的新帳號不代為啟用,要客人點 Saleor 確認信(見 bridgeSocialLogin)。
 
 const SECRET = process.env.SALEOR_SOCIAL_BRIDGE_SECRET ?? "";
 
@@ -122,7 +123,13 @@ export async function bridgeSocialLogin(params: {
 
 	const { provider, providerAccountId, channel } = params;
 	// LINE 常拿不到 email → 用 provider + userId 合成穩定 email
-	const email = params.email?.trim() || `${provider}_${providerAccountId}@social.local`;
+	const realEmail = params.email?.trim() || "";
+	const email = realEmail || `${provider}_${providerAccountId}@social.local`;
+	// LINE 的 ID token 沒有 email_verified，官方文件也沒保證回傳的 email 已驗證（2026-10-09 安全稽核
+	// 待驗證線索）。而帳號一被確認，Saleor 就會把「同 email 的所有訪客舊訂單」歸到這個帳號
+	// （match_orders_with_new_user）。所以 LINE 帶真實 email 的新帳號不代為啟用，改走 Saleor 確認信：
+	// 客人點了信才算證明擁有這個信箱。Google 有 email_verified（auth.ts 已擋），合成 email 不對應任何訂單。
+	const mustProveEmail = provider === "line" && Boolean(realEmail);
 	const firstName = params.firstName?.trim() ?? "";
 	const password = derivePassword(provider, providerAccountId);
 
@@ -134,16 +141,24 @@ export async function bridgeSocialLogin(params: {
 		await recordLineBinding(provider, providerAccountId, email, first.data.tokenCreate.token);
 		return { ok: true };
 	}
+	// ACCOUNT_NOT_CONFIRMED 只在密碼正確時才會回（api-core 啟用端點也靠這點），所以這是我們
+	// 先前替這個 LINE 身分建的帳號，還在等客人點確認信——不是別人的帳號。
+	// （auth-sdk 的 tokenCreate 有查 code，只是型別只宣告了 message。）
+	const firstErrors = first.data.tokenCreate.errors as { code?: string }[];
+	if (mustProveEmail && firstErrors.some((e) => e.code === "ACCOUNT_NOT_CONFIRMED")) {
+		return { ok: false, error: "confirm_email_pending" };
+	}
 
 	// 2) 沒帳號 → 註冊
 	// redirectUrl：channel 開著註冊確認信時 Saleor 規定必填（缺了整個 accountRegister 回
-	// REQUIRED，新客人第一次社群登入必定失敗）。帳號下面會直接啟用，這封信只是附帶寄出。
+	// REQUIRED，新客人第一次社群登入必定失敗）。Saleor 會在後面接 ?email=&token=，由
+	// /api/auth/confirm-account 呼叫 confirmAccount。
 	const reg = await registerSaleorAccount({
 		email,
 		password,
 		firstName,
 		channel,
-		redirectUrl: `${STOREFRONT_URL}/${channel}/login`,
+		redirectUrl: confirmAccountUrl(channel),
 	});
 	const payload = reg.data?.accountRegister;
 	if (reg.errors?.length || !payload) {
@@ -154,7 +169,8 @@ export async function bridgeSocialLogin(params: {
 	if (payload.errors.length > 0 && !alreadyExists) {
 		return { ok: false, error: payload.errors[0].code || "register_failed" };
 	}
-	if (payload.requiresConfirmation && !alreadyExists) {
+	// LINE 帶真實 email：不代為啟用，交給 Saleor 確認信（見上方 mustProveEmail），下面再登入一次分辨結果。
+	if (payload.requiresConfirmation && !alreadyExists && !mustProveEmail) {
 		// 只啟用「這次新建」的帳號。email 已存在時那是別人（或客人自己）先前用密碼註冊、
 		// 還沒驗證的帳號，密碼不是我們設的——啟用它等於把帳號交給當初註冊的人。
 		const activated = await activateNewAccount(email, password);
@@ -168,6 +184,17 @@ export async function bridgeSocialLogin(params: {
 	if (second.data.tokenCreate.token && second.data.tokenCreate.errors.length === 0) {
 		await recordLineBinding(provider, providerAccountId, email, second.data.tokenCreate.token);
 		return { ok: true };
+	}
+	// 新帳號確實建好了、在等確認信（密碼對才會回 ACCOUNT_NOT_CONFIRMED）。若 email 是別人既有帳號，
+	// 這裡會是密碼錯誤——Saleor 3.22.16 的 accountRegister 不回 UNIQUE，只能靠這次登入分辨。
+	const secondErrors = second.data.tokenCreate.errors as { code?: string }[];
+	if (mustProveEmail) {
+		return {
+			ok: false,
+			error: secondErrors.some((e) => e.code === "ACCOUNT_NOT_CONFIRMED")
+				? "confirm_email_pending"
+				: "email_taken",
+		};
 	}
 
 	// Method A(最安全):該 email 之前已用 email/密碼註冊過 → 不碰既有帳號密碼,

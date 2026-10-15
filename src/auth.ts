@@ -27,8 +27,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 				return profile?.email_verified === true;
 			}
 			if (account?.provider === "line") {
-				// LINE 只在 email 已驗證時才回傳 email;拿不到 email 時 bridge 會改用
-				// 合成 email(provider_id@social.local),不觸及任何既有真實帳號,故安全放行。
+				// LINE 的 ID token 沒有 email_verified,官方也沒保證 email 已驗證。放行,但 bridge 對
+				// 帶真實 email 的新帳號不代為啟用,要客人點 Saleor 確認信(證明擁有信箱)才會啟用並
+				// 歸戶舊訂單;拿不到 email 時用合成 email(provider_id@social.local),不觸及任何真實帳號。
 				return true;
 			}
 			return true;

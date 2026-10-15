@@ -11,16 +11,32 @@ const SOCIAL_ERRORS: Record<string, string> = {
 	email_taken: "這個 Email 已經用密碼註冊過了，請改用 Email 和密碼登入。登入後可在「我的帳戶」綁定 LINE。",
 	no_session: "社群登入沒有完成，請再試一次。",
 	missing_identity: "社群登入沒有完成，請再試一次。",
+	confirm_email_pending:
+		"我們已寄一封確認信到你 LINE 帳號的 Email。請點信中的連結完成驗證，再用 LINE 登入一次。",
+	confirm_failed: "確認連結無效或已過期，請再試一次；若仍無法完成，請聯絡客服。",
+};
+// 非錯誤的提示（綠色）。
+const NOTICES: Record<string, string> = {
+	email_confirmed: "Email 已確認完成，請重新登入（用 LINE 註冊的請再按一次 LINE 登入）。",
 };
 const SOCIAL_ERROR_FALLBACK = "社群登入暫時無法使用，請改用 Email 登入。";
 
-export function LoginForm({ channel, socialError }: { channel: string; socialError?: string }) {
+export function LoginForm({
+	channel,
+	socialError,
+	notice,
+}: {
+	channel: string;
+	socialError?: string;
+	notice?: string;
+}) {
 	const [state, formAction, pending] = useActionState<LoginState, FormData>(
 		loginAction.bind(null, channel),
 		undefined,
 	);
 	const error =
 		state?.error ?? (socialError ? SOCIAL_ERRORS[socialError] ?? SOCIAL_ERROR_FALLBACK : undefined);
+	const info = !error && notice ? NOTICES[notice] : undefined;
 
 	return (
 		<div className="mx-auto mt-16 w-full max-w-md">
@@ -33,6 +49,14 @@ export function LoginForm({ channel, socialError }: { channel: string; socialErr
 						className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
 					>
 						{error}
+					</p>
+				) : null}
+				{info ? (
+					<p
+						role="status"
+						className="mb-4 rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700"
+					>
+						{info}
 					</p>
 				) : null}
 
